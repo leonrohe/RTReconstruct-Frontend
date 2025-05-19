@@ -19,7 +19,7 @@ namespace RTReconstruct.Collectors.NeuralRecon
         private CaptureDeviceExtrinsics? m_LastExtrinsic;
         private float m_LastCaptureTime = -Mathf.Infinity;
 
-        public NeuralReconCollector(uint windowsSize = 9, float tMax = 0.1f, float rMax = 15f, float mTime = 0.3f)
+        public NeuralReconCollector(uint windowsSize = 9, float tMax = 0.25f, float rMax = 15f, float mTime = 0.5f)
         {
             m_Intrinsics = new CaptureDeviceIntrinsics[windowsSize];
             m_Extrinsics = new CaptureDeviceExtrinsics[windowsSize];
