@@ -1,3 +1,4 @@
+using System;
 using RTReconstruct.Collectors.Interfaces;
 using RTReconstruct.Core.Models;
 using UnityEngine;
@@ -14,9 +15,11 @@ namespace RTReconstruct.Collectors.NeuralRecon
 
         private readonly float m_tMax;
         private readonly float m_rMax;
+        private readonly float m_iMax;
         private CaptureDeviceExtrinsics? m_LastExtrinsic;
+        private float m_LastCaptureTime = -Mathf.Infinity;
 
-        public NeuralReconCollector(uint windowsSize = 9, float tMax = 0.1f, float rMax = 15f)
+        public NeuralReconCollector(uint windowsSize = 9, float tMax = 0.1f, float rMax = 15f, float mTime = 0.3f)
         {
             m_Intrinsics = new CaptureDeviceIntrinsics[windowsSize];
             m_Extrinsics = new CaptureDeviceExtrinsics[windowsSize];
@@ -24,6 +27,7 @@ namespace RTReconstruct.Collectors.NeuralRecon
 
             m_tMax = tMax;
             m_rMax = rMax;
+            m_iMax = mTime;
         }
 
         public void Collect(CaptureDeviceIntrinsics intrinsics, CaptureDeviceExtrinsics extrinsics, CaptureDeviceFrame frame)
@@ -69,7 +73,13 @@ namespace RTReconstruct.Collectors.NeuralRecon
             if (m_LastExtrinsic == null)
             {
                 m_LastExtrinsic = extrinsics;
+                m_LastCaptureTime = Time.time;
                 return true;
+            }
+
+            if (Time.time - m_LastCaptureTime < m_iMax)
+            {
+                return false;
             }
 
             var last = m_LastExtrinsic.Value;
@@ -82,6 +92,7 @@ namespace RTReconstruct.Collectors.NeuralRecon
             if (translation > m_tMax || rotationAngle > m_rMax)
             {
                 m_LastExtrinsic = extrinsics;
+                m_LastCaptureTime = Time.time;
                 return true;
             }
 
