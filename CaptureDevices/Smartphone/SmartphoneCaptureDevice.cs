@@ -18,17 +18,31 @@ namespace RTReconstruct.CaptureDevices.Smartphone
             m_cameraManager = cameraManager;
         }
 
+        public CaptureDeviceIntrinsics GetIntrinsics()
+        {
+            if (m_cameraManager.TryGetIntrinsics(out XRCameraIntrinsics intrinsics))
+            {
+                return new CaptureDeviceIntrinsics
+                {
+                    FocalLength = intrinsics.focalLength,
+                    PrincipaPoint = intrinsics.principalPoint
+                };
+            }
+
+            return default;
+        }
+
         public CaptureDeviceExtrinsics GetExtrinsics()
         {
             Matrix4x4 currentPose = m_cameraManager.transform.localToWorldMatrix;
             return new CaptureDeviceExtrinsics
             {
-                CameraPosition = currentPose.GetColumn(3),
-                CameraRotation = currentPose.rotation
+                CameraPosition = m_cameraManager.transform.position,
+                CameraRotation = m_cameraManager.transform.rotation
             };
         }
 
-        public CaptureDeviceFrame GetFrame()
+       public CaptureDeviceFrame GetFrame()
         {
             if (m_cameraManager.TryAcquireLatestCpuImage(out XRCpuImage image))
             {
@@ -52,27 +66,15 @@ namespace RTReconstruct.CaptureDevices.Smartphone
                 texture.LoadRawTextureData(buffer);
                 texture.Apply();
 
+                byte[] imageBytes = texture.EncodeToJPG();
+
                 image.Dispose();
                 buffer.Dispose();
 
                 return new CaptureDeviceFrame
                 {
-                    Texture = texture,
+                    Image = imageBytes,
                     Dimensions = new Vector2(width, height)
-                };
-            }
-
-            return default;
-        }
-
-        public CaptureDeviceIntrinsics GetIntrinsics()
-        {
-            if (m_cameraManager.TryGetIntrinsics(out XRCameraIntrinsics intrinsics))
-            {
-                return new CaptureDeviceIntrinsics
-                {
-                    FocalLength = intrinsics.focalLength,
-                    PrincipaPoint = intrinsics.principalPoint
                 };
             }
 

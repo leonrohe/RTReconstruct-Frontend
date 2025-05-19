@@ -1,6 +1,7 @@
 using RTReconstruct.Collectors.Interfaces;
 using RTReconstruct.Core.Models;
 using UnityEngine;
+using UnityEngine.InputSystem.Interactions;
 
 namespace RTReconstruct.Collectors.NeuralRecon
 {
@@ -32,7 +33,6 @@ namespace RTReconstruct.Collectors.NeuralRecon
             m_Intrinsics[m_BufferIdx] = intrinsics;
             m_Extrinsics[m_BufferIdx] = extrinsics;
             m_Frames[m_BufferIdx] = frame;
-            m_LastExtrinsic = extrinsics;
             m_BufferIdx++;
         }
 
@@ -61,22 +61,27 @@ namespace RTReconstruct.Collectors.NeuralRecon
 
         public bool IsNthFrame(uint frameIDX)
         {
-            return true;
+            return frameIDX % 5 == 0;
         }
 
         public bool ShouldCollect(CaptureDeviceIntrinsics intrinsics, CaptureDeviceExtrinsics extrinsics)
         {
             if (m_LastExtrinsic == null)
             {
+                m_LastExtrinsic = extrinsics;
                 return true;
             }
 
             var last = m_LastExtrinsic.Value;
-            float translation = Vector3.Distance(extrinsics.CameraPosition, last.CameraPosition);
-            float rotation = Quaternion.Angle(extrinsics.CameraRotation, last.CameraRotation);
+            Vector3 currentForward = extrinsics.CameraRotation * Vector3.forward;
+            Vector3 lastForward = last.CameraRotation * Vector3.forward;
 
-            if (translation > m_tMax || rotation > m_rMax)
+            float rotationAngle = Vector3.Angle(currentForward, lastForward);
+            float translation = Vector3.Distance(extrinsics.CameraPosition, last.CameraPosition);
+
+            if (translation > m_tMax || rotationAngle > m_rMax)
             {
+                m_LastExtrinsic = extrinsics;
                 return true;
             }
 
