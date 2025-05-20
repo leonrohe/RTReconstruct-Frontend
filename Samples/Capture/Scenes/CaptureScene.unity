@@ -782,7 +782,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 295ecacd52ab8854293ca8addea7b6f0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  serverUrl: ws://192.168.178.28:8765
+  serverUrl: ws://192.168.178.28:5000/ws/client
 --- !u!4 &977087277
 Transform:
   m_ObjectHideFlags: 0
