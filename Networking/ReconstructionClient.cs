@@ -93,7 +93,7 @@ namespace RTReconstruct.Networking
             while (sendQueue.Count > 0 && isConnected)
             {
                 ModelFragment fragment = sendQueue.Dequeue();
-                byte[] data = SerializeFragmentToJsonBytes(fragment);
+                byte[] data = fragment.Serialize();
 
                 try
                 {
