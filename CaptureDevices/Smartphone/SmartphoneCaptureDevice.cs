@@ -27,7 +27,7 @@ namespace RTReconstruct.CaptureDevices.Smartphone
                 return new CaptureDeviceIntrinsics
                 {
                     FocalLength = intrinsics.focalLength,
-                    PrincipaPoint = intrinsics.principalPoint
+                    PrincipalPoint = intrinsics.principalPoint
                 };
             }
 
