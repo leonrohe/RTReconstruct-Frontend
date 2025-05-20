@@ -72,7 +72,7 @@ namespace RTReconstruct.CaptureDevices.Smartphone
                     inputRect = new RectInt(0, 0, width, height),
                     outputDimensions = new Vector2Int(width, height),
                     outputFormat = TextureFormat.RGBA32,
-                    transformation = XRCpuImage.Transformation.MirrorY
+                    transformation = XRCpuImage.Transformation.MirrorX
                 };
 
                 int size = image.GetConvertedDataSize(conversionParams);
