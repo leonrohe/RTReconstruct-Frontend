@@ -19,7 +19,7 @@ namespace RTReconstruct.Collectors.NeuralRecon
         private CaptureDeviceExtrinsics? m_LastExtrinsic;
         private float m_LastCaptureTime = -Mathf.Infinity;
 
-        public NeuralReconCollector(uint windowsSize = 9, float tMax = 0.25f, float rMax = 15f, float mTime = 0.5f)
+        public NeuralReconCollector(uint windowsSize = 9, float tMax = 0.05f, float rMax = 5f, float mTime = 0.0f)
         {
             m_Intrinsics = new CaptureDeviceIntrinsics[windowsSize];
             m_Extrinsics = new CaptureDeviceExtrinsics[windowsSize];
@@ -65,7 +65,7 @@ namespace RTReconstruct.Collectors.NeuralRecon
 
         public bool IsNthFrame(uint frameIDX)
         {
-            return frameIDX % 5 == 0;
+            return true;
         }
 
         public bool ShouldCollect(CaptureDeviceIntrinsics intrinsics, CaptureDeviceExtrinsics extrinsics)
