@@ -5,6 +5,7 @@ using RTReconstruct.CaptureDevices.Smartphone;
 using RTReconstruct.Collectors.Interfaces;
 using RTReconstruct.Collectors.NeuralRecon;
 using RTReconstruct.Networking;
+using TMPro;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
 
@@ -12,6 +13,9 @@ public class ReconstructionManager : MonoBehaviour
 {
     [SerializeField]
     private ARCameraManager aRCameraManager;
+
+    [SerializeField]
+    private TMP_Text statusText;
 
     private ICaptureDevice captureDevice;
     private IModelCollector modelCollector;
@@ -36,9 +40,13 @@ public class ReconstructionManager : MonoBehaviour
         var intrinsics = captureDevice.GetIntrinsics();
         var extrinsics = captureDevice.GetExtrinsics();
 
+        statusText.text = $"Frame: {frameIDX}\n" +
+                          $"Camera Position: {extrinsics.CameraPosition}\n" +
+                          $"Camera Rotation: {extrinsics.CameraRotation}\n" +
+                          $"Intrinsics: {intrinsics.FocalLength}";
         if (modelCollector.ShouldCollect(intrinsics, extrinsics))
         {
-            Handheld.Vibrate();
+            // Handheld.Vibrate();
 
             var frame = captureDevice.GetFrame();
             if (frame.Dimensions == Vector2.zero)
@@ -47,7 +55,7 @@ public class ReconstructionManager : MonoBehaviour
             }
 
             modelCollector.Collect(intrinsics, extrinsics, frame);
-            
+
             if (modelCollector.IsFull())
             {
                 var fragment = modelCollector.Consume();
