@@ -12,6 +12,9 @@ namespace RTReconstruct.Networking
     {
         public static ReconstructionClient Instance { get; private set; }
 
+        public event Action<string> OnMessageReceived;
+
+
         private WebSocket websocket;
         private readonly Queue<ModelFragment> sendQueue = new();
         private bool isSending = false;
@@ -58,8 +61,8 @@ namespace RTReconstruct.Networking
 
             websocket.OnMessage += (bytes) =>
             {
-                var json = Encoding.UTF8.GetString(bytes);
-                Debug.Log($"Received Message: {json}");
+                var message = Encoding.UTF8.GetString(bytes);
+                OnMessageReceived?.Invoke(message);
             };
 
             await websocket.Connect();
@@ -123,13 +126,6 @@ namespace RTReconstruct.Networking
         private void OnApplicationQuit()
         {
             Disconnect();
-        }
-
-        // Replace these with your own implementations:
-        private byte[] SerializeFragmentToJsonBytes(ModelFragment fragment)
-        {
-            string json = JsonUtility.ToJson(fragment); // assumes it's serializable
-            return Encoding.UTF8.GetBytes(json);
         }
     }
 }
