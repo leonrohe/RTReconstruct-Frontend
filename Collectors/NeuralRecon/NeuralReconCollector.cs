@@ -51,7 +51,7 @@ namespace RTReconstruct.Collectors.NeuralRecon
             m_BufferIdx = 0;
 
             return new ModelFragment(
-                "neural_recon",
+                "neucon",
                 frames_copy,
                 intrinsics_copy,
                 extrinsics_copy

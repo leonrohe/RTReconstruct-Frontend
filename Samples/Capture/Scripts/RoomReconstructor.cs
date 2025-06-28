@@ -5,6 +5,9 @@ using System.Threading.Tasks;
 using System;
 using RTReconstruct.Networking;
 using static ObjImporter;
+using System.IO;
+using GLTFast;
+using GLTFast.Logging;
 
 [RequireComponent(typeof(MeshFilter))]
 [RequireComponent(typeof(MeshRenderer))]
@@ -15,41 +18,38 @@ public class RoomReconstructor : MonoBehaviour
 
     void Start()
     {
-        meshFilter = GetComponent<MeshFilter>();
-        ReconstructionClient.Instance.OnMessageReceived += OnObjReceived;
+        ReconstructionClient.Instance.OnMessageReceived += OnGLBReceived;
     }
 
     void Update()
     {
-        // Execute queued actions on the main thread
         while (mainThreadActions.Count > 0)
         {
             var action = mainThreadActions.Dequeue();
-            action();
+            action?.Invoke();
         }
     }
 
-    private void OnObjReceived(string obj)
+    private void OnGLBReceived(byte[] bytes)
     {
-        // Start background task for parsing
-        Task.Run(() =>
+        Debug.Log("OnGLBReceived invoked with byte length: " + bytes.Length);
+        mainThreadActions.Enqueue(() => _ = LoadGlbAsync(bytes));
+    }
+
+
+    private async Task LoadGlbAsync(byte[] bytes)
+    {
+        var logger = new ConsoleLogger(); // Verbose
+        var gltf = new GltfImport(logger: logger);
+
+        bool success = await gltf.Load(bytes);
+        if (success)
         {
-            ParsedMeshData parsed = ObjImporter.Parse(obj);
-
-            // Schedule mesh assignment back on the main thread
-            lock (mainThreadActions)
-            {
-                mainThreadActions.Enqueue(() =>
-                {
-                    Mesh mesh = new Mesh();
-                    mesh.SetVertices(parsed.vertices);
-                    mesh.SetTriangles(parsed.triangles, 0);
-                    mesh.RecalculateNormals();
-                    mesh.RecalculateBounds();
-
-                    meshFilter.mesh = mesh;
-                });
-            }
-        });
+            await gltf.InstantiateMainSceneAsync(transform);
+        }
+        else
+        {
+            Debug.LogError("Failed to load GLTF.");
+        }
     }
 }

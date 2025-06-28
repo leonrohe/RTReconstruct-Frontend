@@ -24,7 +24,7 @@ public class ReconstructionManager : MonoBehaviour
     void Start()
     {
         captureDevice = new SmartphoneCaptureDevice(aRCameraManager);
-        SetCollector(new SLAM3RCollector());
+        SetCollector(new NeuralReconCollector());
 
         ReconstructionClient.Instance.Connect();
     }

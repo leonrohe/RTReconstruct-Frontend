@@ -12,7 +12,7 @@ namespace RTReconstruct.Networking
     {
         public static ReconstructionClient Instance { get; private set; }
 
-        public event Action<string> OnMessageReceived;
+        public event Action<byte[]> OnMessageReceived;
 
 
         private WebSocket websocket;
@@ -61,8 +61,9 @@ namespace RTReconstruct.Networking
 
             websocket.OnMessage += (bytes) =>
             {
-                var message = Encoding.UTF8.GetString(bytes);
-                OnMessageReceived?.Invoke(message);
+                //var message = Encoding.UTF8.GetString(bytes);
+                Debug.Log($"Reeceived {bytes.Length} bytes from server");
+                OnMessageReceived?.Invoke(bytes);
             };
 
             await websocket.Connect();
