@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using RTReconstruct.CaptureDevices.Interfaces;
 using RTReconstruct.CaptureDevices.Smartphone;
+using RTReconstruct.Collector.SLAM3R;
 using RTReconstruct.Collectors.Interfaces;
 using RTReconstruct.Collectors.NeuralRecon;
 using RTReconstruct.Networking;
@@ -23,7 +24,7 @@ public class ReconstructionManager : MonoBehaviour
     void Start()
     {
         captureDevice = new SmartphoneCaptureDevice(aRCameraManager);
-        modelCollector = new NeuralReconCollector();
+        SetCollector(new SLAM3RCollector());
 
         ReconstructionClient.Instance.Connect();
     }
@@ -63,5 +64,11 @@ public class ReconstructionManager : MonoBehaviour
                 Debug.Log($"Created fragment: {fragment}");
             }
         }
+    }
+
+    public void SetCollector(IModelCollector collector)
+    {
+        Debug.Log($"Set new Collector of type: {collector.GetType()}");
+        modelCollector = collector;
     }
 }
