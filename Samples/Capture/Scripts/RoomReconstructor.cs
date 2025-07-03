@@ -45,6 +45,7 @@ public class RoomReconstructor : MonoBehaviour
         bool success = await gltf.Load(bytes);
         if (success)
         {
+            ClearOldMeshes();
             await gltf.InstantiateMainSceneAsync(transform);
         }
         else
@@ -52,4 +53,13 @@ public class RoomReconstructor : MonoBehaviour
             Debug.LogError("Failed to load GLTF.");
         }
     }
+
+    private void ClearOldMeshes()
+    {
+        for (int i = transform.childCount - 1; i >= 0; i--)
+        {
+            Destroy(transform.GetChild(i).gameObject);
+        }
+    }
+
 }
