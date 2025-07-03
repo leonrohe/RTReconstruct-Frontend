@@ -9,11 +9,10 @@ using System.IO;
 using GLTFast;
 using GLTFast.Logging;
 
-[RequireComponent(typeof(MeshFilter))]
-[RequireComponent(typeof(MeshRenderer))]
 public class RoomReconstructor : MonoBehaviour
 {
-    private MeshFilter meshFilter;
+    [SerializeField]
+    private Material vertexMaterial;
     private readonly Queue<Action> mainThreadActions = new();
 
     void Start()
@@ -47,6 +46,7 @@ public class RoomReconstructor : MonoBehaviour
         {
             ClearOldMeshes();
             await gltf.InstantiateMainSceneAsync(transform);
+            ApplyMaterialToAllMeshRenderers(gameObject, vertexMaterial);
         }
         else
         {
@@ -60,6 +60,22 @@ public class RoomReconstructor : MonoBehaviour
         {
             Destroy(transform.GetChild(i).gameObject);
         }
+    }
+
+    private void ApplyMaterialToAllMeshRenderers(GameObject root, Material material)
+    {
+        var renderers = root.GetComponentsInChildren<MeshRenderer>();
+        foreach (var renderer in renderers)
+        {
+            var newMaterials = new Material[renderer.materials.Length];
+            for (int i = 0; i < newMaterials.Length; i++)
+            {
+                newMaterials[i] = material;
+            }
+            renderer.materials = newMaterials;
+        }
+
+        Debug.Log($"Applied custom material to {renderers.Length} mesh renderer(s).");
     }
 
 }
