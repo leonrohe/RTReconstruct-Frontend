@@ -111,10 +111,10 @@ Material:
     - _GlossMapScale: 0
     - _Glossiness: 0
     - _GlossyReflections: 0
-    - _MaxDistance: 0
+    - _MaxDistance: 1.5
     - _MaxPointSize: 300
     - _Metallic: 0
-    - _MinDistance: 0
+    - _MinDistance: 0.5
     - _MinPointSize: 15
     - _OcclusionStrength: 1
     - _Parallax: 0.005

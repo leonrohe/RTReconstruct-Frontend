@@ -2,6 +2,8 @@ Shader "Custom/VertexBillboard"
 {
     Properties
     {
+        _MinDistance ("Min Distance", Float) = 0.1
+        _MaxDistance ("Max Distance", Float) = 1.0
         _MinPointSize ("Min Point Size", Float) = 5.0
         _MaxPointSize ("Max Point Size", Float) = 20.0
     }
@@ -18,6 +20,8 @@ Shader "Custom/VertexBillboard"
 
             #include "UnityCG.cginc"
 
+            float _MinDistance;
+            float _MaxDistance;
             float _MinPointSize;
             float _MaxPointSize;
 
@@ -62,12 +66,8 @@ Shader "Custom/VertexBillboard"
                 float3 cameraPos = _WorldSpaceCameraPos;
                 float distToCam = distance(_WorldSpaceCameraPos, worldPos.xyz);
 
-                // AR-tuned range
-                float minDistance = 0.1;
-                float maxDistance = 1.0;
-
                 // Logarithmic interpolation
-                float t = saturate(log2(distToCam / minDistance) / log2(maxDistance / minDistance));
+                float t = saturate(log2(distToCam / _MinDistance) / log2(_MaxDistance / _MinDistance));
                 float pointSize = lerp(_MinPointSize, _MaxPointSize, 1.0 - t);
 
                 // Convert size to NDC
