@@ -19,6 +19,8 @@ namespace RTReconstruct.Networking
         private readonly Queue<ModelFragment> sendQueue = new();
         private bool isSending = false;
         private bool isConnected = false;
+        private string clientRole;
+        private string clientScene;
 
         [SerializeField]
         private string serverUrl = "wss://yourserver.com/socket";
@@ -34,16 +36,20 @@ namespace RTReconstruct.Networking
             DontDestroyOnLoad(gameObject);
         }
 
-        public async void Connect()
+        public async void Connect(string role, string scene)
         {
             if (isConnected) return;
 
             websocket = new WebSocket(serverUrl);
+            clientRole = role;
+            clientScene = scene;
 
-            websocket.OnOpen += () =>
+
+            websocket.OnOpen += async () =>
             {
                 Debug.Log("WebSocket connected");
                 isConnected = true;
+                await ServerHandshake(clientRole, clientScene);
                 _ = ProcessSendQueueAsync(); // fire-and-forget
             };
 
@@ -61,7 +67,6 @@ namespace RTReconstruct.Networking
 
             websocket.OnMessage += (bytes) =>
             {
-                //var message = Encoding.UTF8.GetString(bytes);
                 Debug.Log($"Reeceived {bytes.Length} bytes from server");
                 OnMessageReceived?.Invoke(bytes);
             };
@@ -69,12 +74,17 @@ namespace RTReconstruct.Networking
             await websocket.Connect();
         }
 
-        public async void Disconnect()
+        public async Task ServerHandshake(string role, string scene)
         {
             if (websocket != null && isConnected)
             {
-                await websocket.Close();
-                isConnected = false;
+                string handshakeMessage = $"{{\"role\":\"{role}\",\"scene\":\"{scene}\"}}";
+                await websocket.SendText(handshakeMessage);
+                Debug.Log("Handshake sent to server.");  
+            }
+            else
+            {
+                Debug.LogWarning("Cannot send handshake: Not connected to server.");
             }
         }
 
@@ -122,6 +132,15 @@ namespace RTReconstruct.Networking
     #if !UNITY_WEBGL || UNITY_EDITOR
             websocket?.DispatchMessageQueue(); // Required on non-WebGL platforms
     #endif
+        }
+
+        public async void Disconnect()
+        {
+            if (websocket != null && isConnected)
+            {
+                await websocket.Close();
+                isConnected = false;
+            }
         }
 
         private void OnApplicationQuit()

@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using GLTFast.Schema;
 using RTReconstruct.Core.Models;
 
 namespace RTReconstruct.Core.Models
@@ -9,13 +10,15 @@ namespace RTReconstruct.Core.Models
     public class ModelFragment
     {
         public string ModelName;
+        public string SceneName;
         public CaptureDeviceFrame[] Frames;
         public CaptureDeviceIntrinsics[] Intrinsics;
         public CaptureDeviceExtrinsics[] Extrinsics;
 
-        public ModelFragment(string modelName, CaptureDeviceFrame[] frames, CaptureDeviceIntrinsics[] intrinsics, CaptureDeviceExtrinsics[] extrinsics)
+        public ModelFragment(string modelName, string sceneName, CaptureDeviceFrame[] frames, CaptureDeviceIntrinsics[] intrinsics, CaptureDeviceExtrinsics[] extrinsics)
         {
             ModelName = modelName;
+            SceneName = sceneName;
             Frames = frames;
             Intrinsics = intrinsics;
             Extrinsics = extrinsics;
@@ -33,6 +36,11 @@ namespace RTReconstruct.Core.Models
             // Model data
             bytestream.Write(BitConverter.GetBytes(ModelName.Length), 0, 4); // Write model name length
             bytestream.Write(Encoding.UTF8.GetBytes(ModelName), 0, ModelName.Length); // Write model name
+
+            // Scene data
+            bytestream.Write(BitConverter.GetBytes(SceneName.Length), 0, 4); // Write scene name length
+            bytestream.Write(Encoding.UTF8.GetBytes(SceneName), 0, SceneName.Length); // Write scene name
+
             using (var writer = new BinaryWriter(bytestream))
             {
                 // Write frames to stream

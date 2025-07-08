@@ -40,7 +40,7 @@ namespace RTReconstruct.Collectors.NeuralRecon
             m_BufferIdx++;
         }
 
-        public ModelFragment Consume()
+        public ModelFragment Consume(string scene)
         {
             Debug.Assert(IsFull(), "Cannot consume: buffer is not full.");
 
@@ -52,6 +52,7 @@ namespace RTReconstruct.Collectors.NeuralRecon
 
             return new ModelFragment(
                 "neucon",
+                scene,
                 frames_copy,
                 intrinsics_copy,
                 extrinsics_copy

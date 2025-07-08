@@ -39,7 +39,7 @@ namespace RTReconstruct.Collector.SLAM3R
             m_BufferIdx++;
         }
 
-        public ModelFragment Consume()
+        public ModelFragment Consume(string scene)
         {
             Debug.Assert(IsFull(), "Cannot consume: buffer is not full.");
 
@@ -51,6 +51,7 @@ namespace RTReconstruct.Collector.SLAM3R
 
             return new ModelFragment(
                 "slam3r",
+                scene,
                 frames_copy,
                 intrinsics_copy,
                 extrinsics_copy

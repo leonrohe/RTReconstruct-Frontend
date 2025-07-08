@@ -13,6 +13,6 @@ namespace RTReconstruct.Collectors.Interfaces
 
         void Collect(CaptureDeviceIntrinsics intrinsics, CaptureDeviceExtrinsics extrinsics, CaptureDeviceFrame frame);
 
-        ModelFragment Consume();
+        ModelFragment Consume(string scene);
     }
 }
