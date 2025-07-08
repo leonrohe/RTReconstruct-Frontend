@@ -12,7 +12,9 @@ using GLTFast.Logging;
 public class RoomReconstructor : MonoBehaviour
 {
     [SerializeField]
-    private Material vertexMaterial;
+    private Material MeshMaterial;
+    [SerializeField]
+    private Material pointcloudMaterial;
     private readonly Queue<Action> mainThreadActions = new();
 
     void Start()
@@ -46,7 +48,7 @@ public class RoomReconstructor : MonoBehaviour
         {
             ClearOldMeshes();
             await gltf.InstantiateMainSceneAsync(transform);
-            ApplyMaterialToAllMeshRenderers(gameObject, vertexMaterial);
+            ApplyMaterialToAllMeshRenderers(gameObject, pointcloudMaterial);
         }
         else
         {
