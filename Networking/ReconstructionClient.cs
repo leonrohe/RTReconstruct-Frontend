@@ -12,7 +12,7 @@ namespace RTReconstruct.Networking
     {
         public static ReconstructionClient Instance { get; private set; }
 
-        public event Action<byte[]> OnMessageReceived;
+        public event Action<ModelResult> OnModelResultReceived;
 
 
         private WebSocket websocket;
@@ -68,7 +68,7 @@ namespace RTReconstruct.Networking
             websocket.OnMessage += (bytes) =>
             {
                 Debug.Log($"Reeceived {bytes.Length} bytes from server");
-                OnMessageReceived?.Invoke(bytes);
+                OnModelResultReceived?.Invoke(new ModelResult(bytes));
             };
 
             await websocket.Connect();
@@ -80,7 +80,7 @@ namespace RTReconstruct.Networking
             {
                 string handshakeMessage = $"{{\"role\":\"{role}\",\"scene\":\"{scene}\"}}";
                 await websocket.SendText(handshakeMessage);
-                Debug.Log("Handshake sent to server.");  
+                Debug.Log("Handshake sent to server.");
             }
             else
             {

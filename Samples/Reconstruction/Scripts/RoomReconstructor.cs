@@ -8,6 +8,7 @@ using static ObjImporter;
 using System.IO;
 using GLTFast;
 using GLTFast.Logging;
+using RTReconstruct.Core.Models;
 
 public class RoomReconstructor : MonoBehaviour
 {
@@ -19,7 +20,7 @@ public class RoomReconstructor : MonoBehaviour
 
     void Start()
     {
-        ReconstructionClient.Instance.OnMessageReceived += OnGLBReceived;
+        ReconstructionClient.Instance.OnModelResultReceived += OnModelResultReceived;
     }
 
     void Update()
@@ -31,24 +32,40 @@ public class RoomReconstructor : MonoBehaviour
         }
     }
 
-    private void OnGLBReceived(byte[] bytes)
+    private void OnModelResultReceived(ModelResult result)
     {
-        Debug.Log("OnGLBReceived invoked with byte length: " + bytes.Length);
-        mainThreadActions.Enqueue(() => _ = LoadGlbAsync(bytes));
+        Debug.Log($@"
+            Received Result:
+            Scene:        {result.GetScene()}
+            Position:     {result.GetPosition()}
+            Rotation:     {result.GetRotation()}
+            Scale:        {result.GetScale()}
+            IsPointcloud: {result.IsPointcloud()}
+            GLB Size:     {result.GetGLB().Length} bytes
+        ");
+
+        mainThreadActions.Enqueue(() => _ = InstantiateResultAsync(result));
     }
 
 
-    private async Task LoadGlbAsync(byte[] bytes)
+    private async Task InstantiateResultAsync(ModelResult result)
     {
-        var logger = new ConsoleLogger(); // Verbose
+        var logger = new ConsoleLogger();
         var gltf = new GltfImport(logger: logger);
 
-        bool success = await gltf.Load(bytes);
+        bool success = await gltf.Load(result.GetGLB());
         if (success)
         {
             ClearOldMeshes();
+
             await gltf.InstantiateMainSceneAsync(transform);
-            ApplyMaterialToAllMeshRenderers(gameObject, pointcloudMaterial);
+
+            transform.transform.localPosition = result.GetPosition();
+            transform.transform.localRotation = result.GetRotation();
+            transform.transform.localScale = result.GetScale();
+
+            var material = result.IsPointcloud() ? pointcloudMaterial : MeshMaterial;
+            ApplyMaterialToAllMeshRenderers(gameObject, material);
         }
         else
         {
@@ -79,5 +96,4 @@ public class RoomReconstructor : MonoBehaviour
 
         Debug.Log($"Applied custom material to {renderers.Length} mesh renderer(s).");
     }
-
 }
