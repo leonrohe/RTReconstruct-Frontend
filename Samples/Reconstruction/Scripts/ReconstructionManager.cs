@@ -21,10 +21,11 @@ public class ReconstructionManager : MonoBehaviour
     private Coroutine captureCoroutine;
     private ICaptureDevice captureDevice;
     private IModelCollector modelCollector;
+    private bool isHost = false;
 
     void Start()
     {
-        //InitReconstruction(clientRole, clientScene);
+        captureDevice = new SmartphoneCaptureDevice(aRCameraManager);
     }
 
     public void InitReconstruction(string role, string scene)
@@ -52,16 +53,51 @@ public class ReconstructionManager : MonoBehaviour
 
     private void RegisterHost()
     {
-        captureDevice = new SmartphoneCaptureDevice(aRCameraManager);
         SetCollector(new NeuralReconCollector());
+        isHost = true;
 
-        captureCoroutine = StartCoroutine(CaptureCoroutine());
+        //captureCoroutine = StartCoroutine(CaptureCoroutine());
         ReconstructionClient.Instance.Connect("host", currentScene);
     }
 
     private void RegisterVisitor()
     {
         ReconstructionClient.Instance.Connect("visitor", currentScene);
+    }
+
+    void Update()
+    {
+        if (!isHost) return;
+
+        uint frameIDX = (uint)Time.frameCount;
+
+        if (!modelCollector.IsNthFrame(frameIDX))
+        {
+            return;
+        }
+
+        var intrinsics = captureDevice.GetIntrinsics();
+        var extrinsics = captureDevice.GetExtrinsics();
+
+        if (modelCollector.ShouldCollect(intrinsics, extrinsics))
+        {
+            //Handheld.Vibrate();
+
+            var frame = captureDevice.GetFrame();
+            if (frame.Dimensions == Vector2.zero)
+            {
+                return;
+            }
+
+            modelCollector.Collect(intrinsics, extrinsics, frame);
+            
+            if (modelCollector.IsFull())
+            {
+                var fragment = modelCollector.Consume(currentScene);
+                ReconstructionClient.Instance.EnqueueFragment(fragment);
+                Debug.Log($"Created fragment: {fragment}");
+            }
+        }
     }
 
     private IEnumerator CaptureCoroutine()
