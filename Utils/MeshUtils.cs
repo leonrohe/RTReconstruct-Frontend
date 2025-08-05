@@ -97,77 +97,90 @@ public class MeshUtils
     }
 
     public static void ChunkPointCloud(Mesh mesh, Material material, Transform parent, int chunksX, int chunksY, int chunksZ)
+{
+    // Clear old chunks
+    List<Transform> childrenToDelete = new List<Transform>();
+    foreach (Transform child in parent)
     {
-        // Clear old chunks
-        List<Transform> childrenToDelete = new List<Transform>();
-        foreach (Transform child in parent)
-        {
-            if (child.name.StartsWith("PointChunk_"))
-                childrenToDelete.Add(child);
-        }
-        foreach (var c in childrenToDelete)
-        {
-            Object.Destroy(c.gameObject);
-        }
-
-        Vector3[] vertices = mesh.vertices;
-
-        Bounds bounds = mesh.bounds;
-        Vector3 min = bounds.min;
-        Vector3 max = bounds.max;
-
-        float chunkSizeX = (max.x - min.x) / chunksX;
-        float chunkSizeY = (max.y - min.y) / chunksY;
-        float chunkSizeZ = (max.z - min.z) / chunksZ;
-
-        Dictionary<(int, int, int), List<Vector3>> chunkMap = new Dictionary<(int, int, int), List<Vector3>>();
-
-        // Initialize chunk containers
-        for (int x = 0; x < chunksX; x++)
-            for (int y = 0; y < chunksY; y++)
-                for (int z = 0; z < chunksZ; z++)
-                    chunkMap[(x, y, z)] = new List<Vector3>();
-
-        // Assign each vertex to a chunk
-        foreach (var vertex in vertices)
-        {
-            int cx = Mathf.Clamp(Mathf.FloorToInt((vertex.x - min.x) / chunkSizeX), 0, chunksX - 1);
-            int cy = Mathf.Clamp(Mathf.FloorToInt((vertex.y - min.y) / chunkSizeY), 0, chunksY - 1);
-            int cz = Mathf.Clamp(Mathf.FloorToInt((vertex.z - min.z) / chunkSizeZ), 0, chunksZ - 1);
-            chunkMap[(cx, cy, cz)].Add(vertex);
-        }
-
-        int createdChunks = 0;
-        foreach (var kvp in chunkMap)
-        {
-            var points = kvp.Value;
-            if (points.Count == 0) continue;
-
-            Mesh chunkMesh = new Mesh();
-            chunkMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
-            chunkMesh.vertices = points.ToArray();
-
-            int[] indices = new int[points.Count];
-            for (int i = 0; i < points.Count; i++) indices[i] = i;
-            chunkMesh.SetIndices(indices, MeshTopology.Points, 0);
-
-            GameObject chunkGO = new GameObject($"PointChunk_{kvp.Key.Item1}_{kvp.Key.Item2}_{kvp.Key.Item3}");
-            chunkGO.transform.parent = parent;
-            chunkGO.transform.localPosition = Vector3.zero;
-            chunkGO.transform.localRotation = Quaternion.identity;
-            chunkGO.transform.localScale = Vector3.one;
-
-            MeshFilter mf = chunkGO.AddComponent<MeshFilter>();
-            mf.mesh = chunkMesh;
-
-            MeshRenderer mr = chunkGO.AddComponent<MeshRenderer>();
-            mr.material = material;
-
-            createdChunks++;
-        }
-
-        Debug.Log($"Point cloud chunking complete: created {createdChunks} chunks.");
+        if (child.name.StartsWith("PointChunk_"))
+            childrenToDelete.Add(child);
     }
+    foreach (var c in childrenToDelete)
+    {
+        Object.Destroy(c.gameObject);
+    }
+
+    Vector3[] vertices = mesh.vertices;
+    Color[] colors = mesh.colors;
+
+    Bounds bounds = mesh.bounds;
+    Vector3 min = bounds.min;
+    Vector3 max = bounds.max;
+
+    float chunkSizeX = (max.x - min.x) / chunksX;
+    float chunkSizeY = (max.y - min.y) / chunksY;
+    float chunkSizeZ = (max.z - min.z) / chunksZ;
+
+    Dictionary<(int, int, int), List<Vector3>> chunkVertices = new Dictionary<(int, int, int), List<Vector3>>();
+    Dictionary<(int, int, int), List<Color>> chunkColors = new Dictionary<(int, int, int), List<Color>>();
+
+    for (int x = 0; x < chunksX; x++)
+        for (int y = 0; y < chunksY; y++)
+            for (int z = 0; z < chunksZ; z++)
+            {
+                var key = (x, y, z);
+                chunkVertices[key] = new List<Vector3>();
+                chunkColors[key] = new List<Color>();
+            }
+
+    // Assign each vertex and its color to the appropriate chunk
+    for (int i = 0; i < vertices.Length; i++)
+    {
+        Vector3 vertex = vertices[i];
+        Color color = colors != null && i < colors.Length ? colors[i] : Color.white;
+
+        int cx = Mathf.Clamp(Mathf.FloorToInt((vertex.x - min.x) / chunkSizeX), 0, chunksX - 1);
+        int cy = Mathf.Clamp(Mathf.FloorToInt((vertex.y - min.y) / chunkSizeY), 0, chunksY - 1);
+        int cz = Mathf.Clamp(Mathf.FloorToInt((vertex.z - min.z) / chunkSizeZ), 0, chunksZ - 1);
+
+        var key = (cx, cy, cz);
+        chunkVertices[key].Add(vertex);
+        chunkColors[key].Add(color);
+    }
+
+    int createdChunks = 0;
+    foreach (var kvp in chunkVertices)
+    {
+        var points = kvp.Value;
+        var pointColors = chunkColors[kvp.Key];
+        if (points.Count == 0) continue;
+
+        Mesh chunkMesh = new Mesh();
+        chunkMesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+        chunkMesh.vertices = points.ToArray();
+        chunkMesh.colors = pointColors.ToArray();
+
+        int[] indices = new int[points.Count];
+        for (int i = 0; i < points.Count; i++) indices[i] = i;
+        chunkMesh.SetIndices(indices, MeshTopology.Points, 0);
+
+        GameObject chunkGO = new GameObject($"PointChunk_{kvp.Key.Item1}_{kvp.Key.Item2}_{kvp.Key.Item3}");
+        chunkGO.transform.parent = parent;
+        chunkGO.transform.localPosition = Vector3.zero;
+        chunkGO.transform.localRotation = Quaternion.identity;
+        chunkGO.transform.localScale = Vector3.one;
+
+        MeshFilter mf = chunkGO.AddComponent<MeshFilter>();
+        mf.mesh = chunkMesh;
+
+        MeshRenderer mr = chunkGO.AddComponent<MeshRenderer>();
+        mr.material = material;
+
+        createdChunks++;
+    }
+
+    Debug.Log($"Point cloud chunking complete: created {createdChunks} chunks.");
+}
 
     class MeshChunk
     {
