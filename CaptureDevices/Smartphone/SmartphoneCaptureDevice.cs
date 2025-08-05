@@ -12,13 +12,10 @@ namespace RTReconstruct.CaptureDevices.Smartphone
     public class SmartphoneCaptureDevice : ICaptureDevice
     {
         readonly ARCameraManager m_cameraManager;
-        private Matrix4x4 initialWorldToCameraMatrix;
-
 
         public SmartphoneCaptureDevice(ARCameraManager cameraManager)
         {
             m_cameraManager = cameraManager;
-            initialWorldToCameraMatrix = m_cameraManager.transform.localToWorldMatrix.inverse;
         }
 
         public CaptureDeviceIntrinsics GetIntrinsics()
@@ -39,14 +36,12 @@ namespace RTReconstruct.CaptureDevices.Smartphone
         {
             Transform camTransform = m_cameraManager.transform;
             Matrix4x4 current = camTransform.localToWorldMatrix;
-
-            Matrix4x4 relative = initialWorldToCameraMatrix * current;
-
-            Vector3 position = relative.GetColumn(3); // Relative translation
+            
             Quaternion rotation = Quaternion.LookRotation(
-                relative.GetColumn(2),
-                relative.GetColumn(1) 
+                current.GetColumn(2),
+                current.GetColumn(1) 
             );
+            Vector3 position = current.GetColumn(3);
 
             return new CaptureDeviceExtrinsics
             {
