@@ -4,7 +4,6 @@ using UnityEngine;
 using System.Threading.Tasks;
 using System;
 using RTReconstruct.Networking;
-using static ObjImporter;
 using System.IO;
 using GLTFast;
 using GLTFast.Logging;
@@ -50,26 +49,37 @@ public class RoomReconstructor : MonoBehaviour
 
     private async Task InstantiateResultAsync(ModelResult result)
     {
-        var logger = new ConsoleLogger();
-        var gltf = new GltfImport(logger: logger);
-
-        bool success = await gltf.Load(result.GetGLB());
-        if (success)
+        try
         {
-            ClearOldMeshes();
+            var logger = new ConsoleLogger();
+            var gltf = new GltfImport(logger: logger);
 
-            await gltf.InstantiateMainSceneAsync(transform);
+            bool success = await gltf.Load(result.GetGLB());
+            if (success)
+            {
+                transform.localPosition = result.GetPosition();
+                transform.localRotation = result.GetRotation();
+                transform.localScale = result.GetScale();
 
-            transform.transform.localPosition = result.GetPosition();
-            transform.transform.localRotation = result.GetRotation();
-            transform.transform.localScale = result.GetScale();
-
-            var material = result.IsPointcloud() ? pointcloudMaterial : MeshMaterial;
-            ApplyMaterialToAllMeshRenderers(gameObject, material);
+                var mesh = gltf.GetMesh(0, 0);
+                var material = result.IsPointcloud() ? pointcloudMaterial : MeshMaterial;
+                if (result.IsPointcloud())
+                {
+                    MeshUtils.ChunkPointCloud(mesh, material, transform, 5, 5, 1);
+                }
+                else
+                {
+                    MeshUtils.ChunkMesh(mesh, material, transform, 5, 5, 5);
+                }
+            }
+            else
+            {
+                Debug.LogError("Failed to load GLTF.");
+            }
         }
-        else
+        catch (Exception ex)
         {
-            Debug.LogError("Failed to load GLTF.");
+            Debug.LogError($"Exception in InstantiateResultAsync: {ex}");
         }
     }
 
