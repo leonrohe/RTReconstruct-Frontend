@@ -18,7 +18,7 @@ namespace RTReconstruct.Collector.SLAM3R
         private CaptureDeviceExtrinsics? m_LastExtrinsic;
         private float m_LastCaptureTime = -Mathf.Infinity;
 
-        public SLAM3RCollector(uint windowsSize = 5, float tMax = 0.05f, float rMax = 5f, float mTime = 0.0f)
+        public SLAM3RCollector(uint windowsSize = 5, float tMax = 0.1f, float rMax = 15f, float mTime = 0.0f)
         {
             m_Intrinsics = new CaptureDeviceIntrinsics[windowsSize];
             m_Extrinsics = new CaptureDeviceExtrinsics[windowsSize];
