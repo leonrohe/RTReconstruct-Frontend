@@ -90,7 +90,9 @@ public class ReconstructionManager : MonoBehaviour
             }
 
             modelCollector.Collect(intrinsics, extrinsics, frame);
-            
+
+            MeshUtils.CreateCameraFrustumWireframe(extrinsics.CameraPosition, extrinsics.CameraRotation);
+
             if (modelCollector.IsFull())
             {
                 var fragment = modelCollector.Consume(currentScene);

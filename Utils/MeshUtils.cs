@@ -3,6 +3,61 @@ using UnityEngine;
 
 public class MeshUtils
 {
+    public static GameObject CreateCameraFrustumWireframe(Vector3 position, Quaternion rotation, float fov = 60f, float aspect = 1.33f, float length = 0.2f)
+    {
+        GameObject frustumGO = new GameObject("CameraFrustumWire");
+
+        // Convert FOV to radians
+        float halfFOV = fov * 0.5f * Mathf.Deg2Rad;
+        float height = Mathf.Tan(halfFOV) * length;
+        float width = height * aspect;
+
+        // Define frustum corners in local space
+        Vector3 tip = Vector3.zero;
+        Vector3 topLeft = new Vector3(-width, height, length);
+        Vector3 topRight = new Vector3(width, height, length);
+        Vector3 bottomRight = new Vector3(width, -height, length);
+        Vector3 bottomLeft = new Vector3(-width, -height, length);
+
+        // Transform corners to world space
+        Matrix4x4 trs = Matrix4x4.TRS(position, rotation, Vector3.one);
+
+        Vector3 wTip = trs.MultiplyPoint3x4(tip);
+        Vector3 wTL = trs.MultiplyPoint3x4(topLeft);
+        Vector3 wTR = trs.MultiplyPoint3x4(topRight);
+        Vector3 wBR = trs.MultiplyPoint3x4(bottomRight);
+        Vector3 wBL = trs.MultiplyPoint3x4(bottomLeft);
+
+        // Create a line renderer for each edge
+        void DrawEdge(Vector3 a, Vector3 b)
+        {
+            GameObject lineGO = new GameObject("FrustumEdge");
+            lineGO.transform.parent = frustumGO.transform;
+
+            LineRenderer lr = lineGO.AddComponent<LineRenderer>();
+            lr.positionCount = 2;
+            lr.SetPosition(0, a);
+            lr.SetPosition(1, b);
+            lr.widthMultiplier = 0.005f;
+            lr.material = new Material(Shader.Find("Sprites/Default"));
+            lr.startColor = lr.endColor = Color.cyan;
+            lr.useWorldSpace = true;
+        }
+
+        // Draw the 8 edges of the frustum
+        DrawEdge(wTip, wTL);
+        DrawEdge(wTip, wTR);
+        DrawEdge(wTip, wBR);
+        DrawEdge(wTip, wBL);
+
+        DrawEdge(wTL, wTR);
+        DrawEdge(wTR, wBR);
+        DrawEdge(wBR, wBL);
+        DrawEdge(wBL, wTL);
+
+        return frustumGO;
+    }
+
     public static void ChunkMesh(Mesh mesh, Material material, Transform parent, int chunksX, int chunksY, int chunksZ)
     {
         // Clear old chunks
