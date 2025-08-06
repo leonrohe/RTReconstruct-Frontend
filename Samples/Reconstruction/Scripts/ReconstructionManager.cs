@@ -16,6 +16,7 @@ public class ReconstructionManager : MonoBehaviour
     [Header("AR Settings")]
     [SerializeField] private ARCameraManager aRCameraManager;
     [SerializeField] private TMP_Text statusText;
+    [SerializeField] private bool drawCameraFrustrum;
 
     private string currentScene;
     private Coroutine captureCoroutine;
@@ -91,7 +92,11 @@ public class ReconstructionManager : MonoBehaviour
 
             modelCollector.Collect(intrinsics, extrinsics, frame);
 
-            MeshUtils.CreateCameraFrustumWireframe(extrinsics.CameraPosition, extrinsics.CameraRotation);
+            if (drawCameraFrustrum)
+            {
+                var frustrumMesh = MeshUtils.CreateCameraFrustumWireframe(extrinsics.CameraPosition, extrinsics.CameraRotation);
+                Destroy(frustrumMesh, 5f);
+            }         
 
             if (modelCollector.IsFull())
             {

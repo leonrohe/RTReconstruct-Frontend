@@ -38,7 +38,7 @@ public class MeshUtils
             lr.positionCount = 2;
             lr.SetPosition(0, a);
             lr.SetPosition(1, b);
-            lr.widthMultiplier = 0.005f;
+            lr.widthMultiplier = 0.002f;
             lr.material = new Material(Shader.Find("Sprites/Default"));
             lr.startColor = lr.endColor = Color.cyan;
             lr.useWorldSpace = true;
