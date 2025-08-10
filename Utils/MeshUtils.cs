@@ -29,7 +29,7 @@ public class MeshUtils
         Vector3 wBL = trs.MultiplyPoint3x4(bottomLeft);
 
         // Create a line renderer for each edge
-        void DrawEdge(Vector3 a, Vector3 b)
+        void DrawEdge(Vector3 a, Vector3 b, Color color)
         {
             GameObject lineGO = new GameObject("FrustumEdge");
             lineGO.transform.parent = frustumGO.transform;
@@ -40,20 +40,24 @@ public class MeshUtils
             lr.SetPosition(1, b);
             lr.widthMultiplier = 0.002f;
             lr.material = new Material(Shader.Find("Sprites/Default"));
-            lr.startColor = lr.endColor = Color.cyan;
+            lr.startColor = lr.endColor = color;
             lr.useWorldSpace = true;
         }
 
         // Draw the 8 edges of the frustum
-        DrawEdge(wTip, wTL);
-        DrawEdge(wTip, wTR);
-        DrawEdge(wTip, wBR);
-        DrawEdge(wTip, wBL);
+        DrawEdge(wTip, wTL, Color.cyan);
+        DrawEdge(wTip, wTR, Color.cyan);
+        DrawEdge(wTip, wBR, Color.cyan);
+        DrawEdge(wTip, wBL, Color.cyan);
 
-        DrawEdge(wTL, wTR);
-        DrawEdge(wTR, wBR);
-        DrawEdge(wBR, wBL);
-        DrawEdge(wBL, wTL);
+        DrawEdge(wTL, wTR, Color.cyan);
+        DrawEdge(wTR, wBR, Color.cyan);
+        DrawEdge(wBR, wBL, Color.cyan);
+        DrawEdge(wBL, wTL, Color.cyan);
+
+
+        // Draw center line
+        DrawEdge(wTip, wTip + rotation * Vector3.forward, Color.red);
 
         return frustumGO;
     }

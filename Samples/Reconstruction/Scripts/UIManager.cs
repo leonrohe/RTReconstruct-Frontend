@@ -50,11 +50,11 @@ public class UIManager : MonoBehaviour
     {
         if (index == 0)
         {
-            GameObject.Find("ReconstructionManager").GetComponent<ReconstructionManager>().SetCollector(new NeuralReconCollector());
+            GameObject.Find("Reconstruction Manager").GetComponent<ReconstructionManager>().SetCollector(new NeuralReconCollector());
         }
         else if (index == 1)
         {
-            GameObject.Find("ReconstructionManager").GetComponent<ReconstructionManager>().SetCollector(new SLAM3RCollector());
+            GameObject.Find("Reconstruction Manager").GetComponent<ReconstructionManager>().SetCollector(new SLAM3RCollector());
         }
     }
 }
