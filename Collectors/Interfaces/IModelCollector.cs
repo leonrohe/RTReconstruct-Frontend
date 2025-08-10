@@ -11,6 +11,8 @@ namespace RTReconstruct.Collectors.Interfaces
 
         bool IsFull();
 
+        void Clear();
+
         void Collect(CaptureDeviceIntrinsics intrinsics, CaptureDeviceExtrinsics extrinsics, CaptureDeviceFrame frame);
 
         ModelFragment Consume(string scene);

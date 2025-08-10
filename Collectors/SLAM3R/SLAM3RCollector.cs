@@ -1,3 +1,4 @@
+using System;
 using RTReconstruct.Collectors.Interfaces;
 using RTReconstruct.Core.Models;
 using UnityEngine;
@@ -97,6 +98,21 @@ namespace RTReconstruct.Collector.SLAM3R
             }
 
             return false;
+        }
+
+        public void Clear()
+        {
+            // Reset buffer index
+            m_BufferIdx = 0;
+
+            // Clear arrays to release references and reset value types
+            Array.Clear(m_Intrinsics, 0, m_Intrinsics.Length);
+            Array.Clear(m_Extrinsics, 0, m_Extrinsics.Length);
+            Array.Clear(m_Frames, 0, m_Frames.Length);
+
+            // Reset last extrinsic tracking
+            m_LastExtrinsic = null;
+            m_LastCaptureTime = -Mathf.Infinity;
         }
     }
 }

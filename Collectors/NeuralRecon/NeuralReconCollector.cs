@@ -99,5 +99,20 @@ namespace RTReconstruct.Collectors.NeuralRecon
 
             return false;
         }
+
+        public void Clear()
+        {
+            // Reset buffer index
+            m_BufferIdx = 0;
+
+            // Clear arrays to release references
+            Array.Clear(m_Intrinsics, 0, m_Intrinsics.Length);
+            Array.Clear(m_Extrinsics, 0, m_Extrinsics.Length);
+            Array.Clear(m_Frames, 0, m_Frames.Length);
+
+            // Reset last capture info
+            m_LastExtrinsic = null;
+            m_LastCaptureTime = -Mathf.Infinity;
+        }
     }
 }

@@ -65,7 +65,7 @@ public class RoomReconstructor : MonoBehaviour
                 var material = result.IsPointcloud() ? pointcloudMaterial : MeshMaterial;
                 if (result.IsPointcloud())
                 {
-                    MeshUtils.ChunkPointCloud(mesh, material, transform, 5, 5, 1);
+                    MeshUtils.ChunkPointCloud(mesh, material, transform, 5, 5, 5);
                 }
                 else
                 {
