@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using NativeWebSocket;
 using RTReconstruct.Core.Models;
+using RTReconstruct.Core.Models.Interfaces;
 
 namespace RTReconstruct.Networking
 {
@@ -16,7 +17,7 @@ namespace RTReconstruct.Networking
 
 
         private WebSocket websocket;
-        private readonly Queue<ModelFragment> sendQueue = new();
+        private readonly LinkedList<IFragment> sendQueue = new();
         private bool isSending = false;
         private bool isConnected = false;
         private string clientRole;
@@ -88,9 +89,20 @@ namespace RTReconstruct.Networking
             }
         }
 
-        public void EnqueueFragment(ModelFragment fragment)
+        public void EnqueueFragment(IFragment fragment)
         {
-            sendQueue.Enqueue(fragment);
+            if (fragment is TransformFragment)
+            {
+                if (sendQueue.Count > 0 && sendQueue.First.Value is TransformFragment)
+                {
+                    sendQueue.RemoveFirst();
+                }
+                sendQueue.AddFirst(fragment);
+            }
+            else
+            { 
+                sendQueue.AddLast(fragment);
+            }
 
             if (isConnected && !isSending)
             {
@@ -106,8 +118,9 @@ namespace RTReconstruct.Networking
 
             while (sendQueue.Count > 0 && isConnected)
             {
-                ModelFragment fragment = sendQueue.Dequeue();
+                IFragment fragment = sendQueue.First.Value;
                 byte[] data = fragment.Serialize();
+                sendQueue.RemoveFirst();
 
                 try
                 {
@@ -116,9 +129,9 @@ namespace RTReconstruct.Networking
                 catch (Exception ex)
                 {
                     Debug.LogWarning("Failed to send fragment: " + ex.Message);
-                    sendQueue.Enqueue(fragment); // Re-enqueue
-                    await Task.Delay(100);       // Brief delay before retry
-                    break; // Exit loop and try again later
+                    sendQueue.AddLast(fragment);    // Re-enqueue
+                    await Task.Delay(100);          // Brief delay before retry
+                    break;                          // Exit loop and try again later
                 }
 
                 await Task.Yield(); // Yield to allow Unity to remain responsive

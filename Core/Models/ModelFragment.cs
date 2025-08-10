@@ -3,11 +3,12 @@ using System.IO;
 using System.Text;
 using GLTFast.Schema;
 using RTReconstruct.Core.Models;
+using RTReconstruct.Core.Models.Interfaces;
 
 namespace RTReconstruct.Core.Models
 {
     [Serializable]
-    public class ModelFragment
+    public class ModelFragment: IFragment
     {
         public string ModelName;
         public string SceneName;
