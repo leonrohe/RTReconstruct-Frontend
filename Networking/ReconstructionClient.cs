@@ -160,5 +160,10 @@ namespace RTReconstruct.Networking
         {
             Disconnect();
         }
+
+        public bool ConnectionStatus()
+        {
+            return isConnected;
+        }
     }
 }
