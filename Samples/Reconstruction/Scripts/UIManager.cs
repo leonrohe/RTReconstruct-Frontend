@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using RTReconstruct.Collector.SLAM3R;
 using RTReconstruct.Collectors.NeuralRecon;
+using RTReconstruct.Networking;
 using TMPro;
 using UnityEngine;
 
@@ -41,20 +42,41 @@ public class UIManager : MonoBehaviour
     public void SetScene()
     {
         scene = SceneChoice.GetComponentInChildren<TMP_InputField>().text;
-        SceneChoice.SetActive(false);
-        RuntimeUI.SetActive(true);
         FindAnyObjectByType<ReconstructionManager>().InitReconstruction(role, scene);
+
+
+        StartCoroutine(AddAvailableModelsToDrowndown());
     }
 
     public void OnModelDropdownChange(int index)
     {
-        if (index == 0)
+        ReconstructionManager reconstructionManager = GameObject.Find("Reconstruction Manager").GetComponent<ReconstructionManager>();
+
+        string model = ModelDropdown.options[index].text;
+        switch (model)
         {
-            GameObject.Find("Reconstruction Manager").GetComponent<ReconstructionManager>().SetCollector(new NeuralReconCollector());
+            case "neucon":
+                reconstructionManager.SetCollector(new NeuralReconCollector());
+                break;
+            case "slam3r":
+                reconstructionManager.SetCollector(new SLAM3RCollector());
+                break;
+            default:
+                reconstructionManager.SetCollector(new NeuralReconCollector()); // choose NeuconCollector as default
+                break;
         }
-        else if (index == 1)
-        {
-            GameObject.Find("Reconstruction Manager").GetComponent<ReconstructionManager>().SetCollector(new SLAM3RCollector());
-        }
+    }
+
+    private IEnumerator AddAvailableModelsToDrowndown()
+    {
+        yield return new WaitForSeconds(1);
+
+        ModelDropdown.ClearOptions();
+        ModelDropdown.AddOptions(ReconstructionClient.Instance.AvailableModels);
+
+        SceneChoice.SetActive(false);
+        RuntimeUI.SetActive(true);
+
+        OnModelDropdownChange(0);
     }
 }

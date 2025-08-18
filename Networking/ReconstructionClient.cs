@@ -6,6 +6,7 @@ using UnityEngine;
 using NativeWebSocket;
 using RTReconstruct.Core.Models;
 using RTReconstruct.Core.Models.Interfaces;
+using Newtonsoft.Json;
 
 namespace RTReconstruct.Networking
 {
@@ -15,11 +16,13 @@ namespace RTReconstruct.Networking
 
         public event Action<ModelResult> OnModelResultReceived;
 
+        public List<string> AvailableModels = new List<string>();
 
         private WebSocket websocket;
         private readonly LinkedList<IFragment> sendQueue = new();
         private bool isSending = false;
         private bool isConnected = false;
+        private bool receivedHandshake = false;
         private string clientRole;
         private string clientScene;
 
@@ -69,7 +72,17 @@ namespace RTReconstruct.Networking
             websocket.OnMessage += (bytes) =>
             {
                 Debug.Log($"Reeceived {bytes.Length} bytes from server");
-                OnModelResultReceived?.Invoke(new ModelResult(bytes));
+
+                if (!receivedHandshake)
+                {
+                    var message = Encoding.UTF8.GetString(bytes);
+                    AvailableModels = JsonConvert.DeserializeObject<List<string>>(message);
+                    receivedHandshake = true;
+                }
+                else
+                {
+                    OnModelResultReceived?.Invoke(new ModelResult(bytes));
+                }    
             };
 
             await websocket.Connect();
@@ -91,6 +104,7 @@ namespace RTReconstruct.Networking
 
         public void EnqueueFragment(IFragment fragment)
         {
+            Debug.Log(fragment);
             if (fragment is TransformFragment)
             {
                 if (sendQueue.Count > 0 && sendQueue.First.Value is TransformFragment)
@@ -100,7 +114,7 @@ namespace RTReconstruct.Networking
                 sendQueue.AddFirst(fragment);
             }
             else
-            { 
+            {
                 sendQueue.AddLast(fragment);
             }
 

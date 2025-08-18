@@ -12,13 +12,15 @@ using UnityEngine.XR.ARFoundation;
 using UnityEngine.Assertions;
 using RTReconstruct.Core.Models;
 using UnityEngine.UI;
+using UnityEngine.UIElements;
+using System.Globalization;
 
 public class ReconstructionManager : MonoBehaviour
 {
     [Header("AR Settings")]
     [SerializeField] private ARCameraManager arCameraManager;
     [SerializeField] private TMP_Text deviceInfo;
-    [SerializeField] private Toggle captureToggle;
+    [SerializeField] private UnityEngine.UI.Toggle captureToggle;
     [SerializeField] private bool drawDeviceInfo = true;
     [SerializeField] private bool drawCameraFrustrum = true;
 
@@ -74,10 +76,20 @@ public class ReconstructionManager : MonoBehaviour
         Debug.Log($"Set new capture state: {state}");
     }
 
+    public void TransformModel()
+    {
+        TransformFragment fragment = new TransformFragment(
+            currentScene,
+            GetVector3FromInputs("Position"),
+            Quaternion.Euler(GetVector3FromInputs("Rotation")),
+            GetVector3FromInputs("Scale")
+        );
+        ReconstructionClient.Instance.EnqueueFragment(fragment);
+    }
+
     private void RegisterHost()
     {
         isHost = true;
-        SetCollector(new NeuralReconCollector());
         ReconstructionClient.Instance.Connect("host", currentScene);
     }
 
@@ -97,6 +109,15 @@ public class ReconstructionManager : MonoBehaviour
         info += $"Rotation: {latestExtrinsics.CameraRotation}\n";
 
         deviceInfo.text = info;
+    }
+
+    private Vector3 GetVector3FromInputs(string vName)
+    {
+        Transform parent = GameObject.Find(vName).transform;
+        float.TryParse(parent.GetChild(1).gameObject.GetComponent<TMP_InputField>().text, NumberStyles.Float, CultureInfo.InvariantCulture, out float x);
+        float.TryParse(parent.GetChild(2).gameObject.GetComponent<TMP_InputField>().text, NumberStyles.Float, CultureInfo.InvariantCulture, out float y);
+        float.TryParse(parent.GetChild(3).gameObject.GetComponent<TMP_InputField>().text, NumberStyles.Float, CultureInfo.InvariantCulture, out float z);
+        return new Vector3(x, y, z);
     }
 
     void Update()
