@@ -1,10 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
-using RTReconstruct.Collector.SLAM3R;
+using RTReconstruct.Collectors.SLAM3R;
 using RTReconstruct.Collectors.NeuralRecon;
 using RTReconstruct.Networking;
 using TMPro;
 using UnityEngine;
+using RTReconstruct.Collectors.Default;
 
 public class UIManager : MonoBehaviour
 {
@@ -62,7 +63,7 @@ public class UIManager : MonoBehaviour
                 reconstructionManager.SetCollector(new SLAM3RCollector());
                 break;
             default:
-                reconstructionManager.SetCollector(new NeuralReconCollector()); // choose NeuconCollector as default
+                reconstructionManager.SetCollector(new DefaultCollector(model));
                 break;
         }
     }

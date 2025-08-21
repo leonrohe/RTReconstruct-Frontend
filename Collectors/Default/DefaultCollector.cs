@@ -3,9 +3,9 @@ using RTReconstruct.Collectors.Interfaces;
 using RTReconstruct.Core.Models;
 using UnityEngine;
 
-namespace RTReconstruct.Collectors.SLAM3R
+namespace RTReconstruct.Collectors.Default
 {
-    public class SLAM3RCollector : IModelCollector
+    public class DefaultCollector : IModelCollector
     {
 
         private uint m_BufferIdx = 0;
@@ -13,18 +13,20 @@ namespace RTReconstruct.Collectors.SLAM3R
         private readonly CaptureDeviceExtrinsics[] m_Extrinsics;
         private readonly CaptureDeviceFrame[] m_Frames;
 
+        private readonly string m_modelName;
         private readonly float m_tMax;
         private readonly float m_rMax;
         private readonly float m_iMax;
         private CaptureDeviceExtrinsics? m_LastExtrinsic;
         private float m_LastCaptureTime = -Mathf.Infinity;
 
-        public SLAM3RCollector(uint windowsSize = 5, float tMax = 0.1f, float rMax = 15f, float mTime = 0.0f)
+        public DefaultCollector(string modelName, uint windowsSize = 5, float tMax = 0.1f, float rMax = 15f, float mTime = 0.0f)
         {
             m_Intrinsics = new CaptureDeviceIntrinsics[windowsSize];
             m_Extrinsics = new CaptureDeviceExtrinsics[windowsSize];
             m_Frames = new CaptureDeviceFrame[windowsSize];
 
+            m_modelName = modelName;
             m_tMax = tMax;
             m_rMax = rMax;
             m_iMax = mTime;
@@ -51,7 +53,7 @@ namespace RTReconstruct.Collectors.SLAM3R
             m_BufferIdx = 0;
 
             return new ModelFragment(
-                "slam3r",
+                m_modelName,
                 scene,
                 frames_copy,
                 intrinsics_copy,

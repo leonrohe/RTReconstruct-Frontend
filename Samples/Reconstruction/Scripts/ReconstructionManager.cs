@@ -4,7 +4,7 @@ using RTReconstruct.CaptureDevices.Interfaces;
 using RTReconstruct.CaptureDevices.Smartphone;
 using RTReconstruct.Collectors.Interfaces;
 using RTReconstruct.Collectors.NeuralRecon;
-using RTReconstruct.Collector.SLAM3R;
+using RTReconstruct.Collectors.SLAM3R;
 using RTReconstruct.Networking;
 using TMPro;
 using UnityEngine;
@@ -14,13 +14,27 @@ using RTReconstruct.Core.Models;
 using UnityEngine.UI;
 using UnityEngine.UIElements;
 using System.Globalization;
+using PassthroughCameraSamples;
+using RTReconstruct.CaptureDevices.MetaQuest;
+
+public enum DeviceType
+{
+    AR,
+    VR
+}
 
 public class ReconstructionManager : MonoBehaviour
 {
+    [SerializeField] private DeviceType deviceType;
     [Header("AR Settings")]
     [SerializeField] private ARCameraManager arCameraManager;
+    [Header("VR Settings")]
+    [SerializeField] private WebCamTextureManager webcamTextureManager;
+    [SerializeField] private GameObject centerEyeAnchor;
+    [Header("UI Settings")]
     [SerializeField] private TMP_Text deviceInfo;
     [SerializeField] private UnityEngine.UI.Toggle captureToggle;
+    [Header("Debug Settings")]
     [SerializeField] private bool drawDeviceInfo = true;
     [SerializeField] private bool drawCameraFrustrum = true;
 
@@ -36,7 +50,15 @@ public class ReconstructionManager : MonoBehaviour
 
     void Start()
     {
-        captureDevice = new SmartphoneCaptureDevice(arCameraManager);
+        switch (deviceType)
+        {
+            case DeviceType.AR:
+                captureDevice = new SmartphoneCaptureDevice(arCameraManager);
+                break;
+            case DeviceType.VR:
+                captureDevice = new MetaQuestCaptureDevice(webcamTextureManager);
+                break;
+        }
 
         if (drawDeviceInfo)
         {
@@ -150,7 +172,7 @@ public class ReconstructionManager : MonoBehaviour
             {
                 var frustrumMesh = MeshUtils.CreateCameraFrustumWireframe(latestExtrinsics.CameraPosition, latestExtrinsics.CameraRotation);
                 Destroy(frustrumMesh, 5f);
-            }         
+            }
 
             if (modelCollector.IsFull())
             {
