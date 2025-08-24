@@ -60,11 +60,6 @@ public class ReconstructionManager : MonoBehaviour
                 break;
         }
 
-        if (drawDeviceInfo)
-        {
-            arCameraManager.frameReceived += DisplayDeviceInfo;
-        }
-
         captureToggle.onValueChanged.AddListener(SetCaptureState);
     }
 
@@ -120,7 +115,7 @@ public class ReconstructionManager : MonoBehaviour
         ReconstructionClient.Instance.Connect("visitor", currentScene);
     }
 
-    private void DisplayDeviceInfo(ARCameraFrameEventArgs args)
+    private void DisplayDeviceInfo()
     {
         string info = "";
 
@@ -128,7 +123,7 @@ public class ReconstructionManager : MonoBehaviour
         info += $"Principal Point: {latestIntrinsics.PrincipalPoint}\n";
 
         info += $"Position: {latestExtrinsics.CameraPosition}\n";
-        info += $"Rotation: {latestExtrinsics.CameraRotation}\n";
+        info += $"Rotation: {latestExtrinsics.CameraRotation.eulerAngles}\n";
 
         deviceInfo.text = info;
     }
@@ -142,10 +137,18 @@ public class ReconstructionManager : MonoBehaviour
         return new Vector3(x, y, z);
     }
 
-    void Update()
+    void LateUpdate()
     {
+        Debug.Assert(captureDevice != null, "captureDevice is null");
+        Debug.Assert(modelCollector != null, "modelCollector is null");
+
         latestIntrinsics = captureDevice.GetIntrinsics();
         latestExtrinsics = captureDevice.GetExtrinsics();
+
+        if (drawDeviceInfo)
+        {
+            DisplayDeviceInfo();
+        }
 
         if (!isHost || !isCapturing)
         {
