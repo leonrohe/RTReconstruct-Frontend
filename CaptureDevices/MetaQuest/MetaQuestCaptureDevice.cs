@@ -5,6 +5,7 @@ using RTReconstruct.CaptureDevices.Interfaces;
 using RTReconstruct.Core.Models;
 using PassthroughCameraSamples;
 using Oculus.Interaction.Samples;
+using Unity.Mathematics;
 
 namespace RTReconstruct.CaptureDevices.MetaQuest
 {
@@ -37,14 +38,17 @@ namespace RTReconstruct.CaptureDevices.MetaQuest
             int height = webcamTexture.height;
 
             var texture = new Texture2D(webcamTexture.width, webcamTexture.height, TextureFormat.RGBA32, false);
-            m_PixelBuffer ??= new Color32[width*height];
+            m_PixelBuffer ??= new Color32[width * height];
             _ = m_WebCamTextureManager.WebCamTexture.GetPixels32(m_PixelBuffer);
             texture.SetPixels32(m_PixelBuffer);
             texture.Apply();
 
+            byte[] jpgData = texture.EncodeToJPG();
+            UnityEngine.Object.Destroy(texture);  // Clean up the texture
+
             return new CaptureDeviceFrame
             {
-                Image = texture.EncodeToJPG(),
+                Image = jpgData,
                 Dimensions = new Vector2(width, height)
             };
         }
