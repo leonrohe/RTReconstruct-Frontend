@@ -104,6 +104,18 @@ public class ReconstructionManager : MonoBehaviour
         ReconstructionClient.Instance.EnqueueFragment(fragment);
     }
 
+    public void SyncModelToRoomAnchor()
+    {
+        var anchorGO = GameObject.Find("RoomAnchor");
+        TransformFragment fragment = new TransformFragment(
+            currentScene,
+            anchorGO.transform.position,
+            anchorGO.transform.rotation,
+            Vector3.one
+        );
+        ReconstructionClient.Instance.EnqueueFragment(fragment);
+    }
+
     private void RegisterHost()
     {
         isHost = true;
@@ -139,9 +151,6 @@ public class ReconstructionManager : MonoBehaviour
 
     void LateUpdate()
     {
-        Debug.Assert(captureDevice != null, "captureDevice is null");
-        Debug.Assert(modelCollector != null, "modelCollector is null");
-
         latestIntrinsics = captureDevice.GetIntrinsics();
         latestExtrinsics = captureDevice.GetExtrinsics();
 

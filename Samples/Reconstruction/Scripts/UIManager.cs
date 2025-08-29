@@ -51,7 +51,7 @@ public class UIManager : MonoBehaviour
 
     public void OnModelDropdownChange(int index)
     {
-        ReconstructionManager reconstructionManager = GameObject.Find("Reconstruction Manager").GetComponent<ReconstructionManager>();
+        ReconstructionManager reconstructionManager = GameObject.Find("ReconstructionManager").GetComponent<ReconstructionManager>();
 
         string model = ModelDropdown.options[index].text;
         switch (model)

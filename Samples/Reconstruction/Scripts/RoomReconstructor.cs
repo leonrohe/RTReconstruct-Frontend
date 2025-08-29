@@ -8,18 +8,27 @@ using System.IO;
 using GLTFast;
 using GLTFast.Logging;
 using RTReconstruct.Core.Models;
+using UnityEngine.VFX;
 
 public class RoomReconstructor : MonoBehaviour
 {
     [SerializeField]
+    private Vector3 relativeOffset = new Vector3(0, 0, 0);
+    [SerializeField]
     private Material MeshMaterial;
     [SerializeField]
     private Material pointcloudMaterial;
+    [SerializeField]
+    private VisualEffect vfx;
+    private GraphicsBuffer posBuffer, colBuffer;
+
     private readonly Queue<Action> mainThreadActions = new();
 
     void Start()
     {
         ReconstructionClient.Instance.OnModelResultReceived += OnModelResultReceived;
+        posBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 100_000, sizeof(float) * 3);
+        colBuffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 100_000, sizeof(float) * 4);
     }
 
     void Update()
@@ -46,7 +55,6 @@ public class RoomReconstructor : MonoBehaviour
         mainThreadActions.Enqueue(() => _ = InstantiateResultAsync(result));
     }
 
-
     private async Task InstantiateResultAsync(ModelResult result)
     {
         try
@@ -57,20 +65,25 @@ public class RoomReconstructor : MonoBehaviour
             bool success = await gltf.Load(result.GetGLB());
             if (success)
             {
-                transform.localPosition = result.GetPosition();
+                transform.localPosition = result.GetPosition() + relativeOffset;
                 transform.localRotation = result.GetRotation();
-                transform.localScale = result.GetScale();
+                transform.localScale = new Vector3(
+                    result.GetScale().x / transform.parent.localScale.x,
+                    result.GetScale().y / transform.parent.localScale.y,
+                    result.GetScale().z / transform.parent.localScale.z
+                );
 
-                var mesh = gltf.GetMesh(0, 0);
+                Mesh mesh = gltf.GetMesh(0, 0);
                 var material = result.IsPointcloud() ? pointcloudMaterial : MeshMaterial;
                 if (result.IsPointcloud())
                 {
-                    MeshUtils.ChunkPointCloud(mesh, material, transform, 5, 5, 5);
+                    InitPointcloud(mesh);
                 }
                 else
                 {
                     MeshUtils.ChunkMesh(mesh, material, transform, 5, 5, 5);
                 }
+                Destroy(mesh);
             }
             else
             {
@@ -83,27 +96,14 @@ public class RoomReconstructor : MonoBehaviour
         }
     }
 
-    private void ClearOldMeshes()
+    private void InitPointcloud(Mesh mesh)
     {
-        for (int i = transform.childCount - 1; i >= 0; i--)
-        {
-            Destroy(transform.GetChild(i).gameObject);
-        }
-    }
+        posBuffer.SetData(mesh.vertices);
+        colBuffer.SetData(mesh.colors);
 
-    private void ApplyMaterialToAllMeshRenderers(GameObject root, Material material)
-    {
-        var renderers = root.GetComponentsInChildren<MeshRenderer>();
-        foreach (var renderer in renderers)
-        {
-            var newMaterials = new Material[renderer.materials.Length];
-            for (int i = 0; i < newMaterials.Length; i++)
-            {
-                newMaterials[i] = material;
-            }
-            renderer.materials = newMaterials;
-        }
-
-        Debug.Log($"Applied custom material to {renderers.Length} mesh renderer(s).");
+        vfx.SetGraphicsBuffer("PosBuffer", posBuffer);
+        vfx.SetGraphicsBuffer("ColBuffer", colBuffer);
+        vfx.SetInt("PointCount", 100_000);
+        vfx.Reinit();
     }
 }
