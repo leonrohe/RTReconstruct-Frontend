@@ -99,7 +99,7 @@ public class MeshUtils
             lr.SetPosition(0, a);
             lr.SetPosition(1, b);
             lr.widthMultiplier = 0.002f;
-            lr.material = new Material(frustumMaterial);
+            lr.material = frustumMaterial;
             lr.startColor = lr.endColor = color;
             lr.useWorldSpace = true;
         }
