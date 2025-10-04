@@ -198,6 +198,7 @@ public class MeshUtils
 
             MeshRenderer mrChunk = chunkGO.AddComponent<MeshRenderer>();
             mrChunk.material = material;
+            mrChunk.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 
             createdChunks++;
         }

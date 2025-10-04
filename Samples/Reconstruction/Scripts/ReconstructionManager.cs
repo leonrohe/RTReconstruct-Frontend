@@ -16,27 +16,53 @@ using UnityEngine.UIElements;
 using System.Globalization;
 using PassthroughCameraSamples;
 using RTReconstruct.CaptureDevices.MetaQuest;
+using System.IO;
+using Newtonsoft.Json;
+
+[System.Serializable]
+public class PoseData
+{
+    public Position position;
+    public Rotation rotation;
+}
+
+[System.Serializable]
+public class Position
+{
+    public float x;
+    public float y;
+    public float z;
+}
+
+[System.Serializable]
+public class Rotation
+{
+    public float x;
+    public float y;
+    public float z;
+    public float w;
+}
 
 public enum DeviceType
 {
     AR,
-    VR
+    AR_EVAL,
+    VR,
+    VR_EVAL
 }
 
 public class ReconstructionManager : MonoBehaviour
 {
     [SerializeField] private DeviceType deviceType;
-    [Header("AR Settings")]
     [SerializeField] private ARCameraManager arCameraManager;
-    [Header("VR Settings")]
     [SerializeField] private WebCamTextureManager webcamTextureManager;
     [SerializeField] private GameObject centerEyeAnchor;
-    [Header("UI Settings")]
+    [SerializeField] private Camera captureCamera;
     [SerializeField] private TMP_Text deviceInfo;
     [SerializeField] private UnityEngine.UI.Toggle captureToggle;
-    [Header("Debug Settings")]
     [SerializeField] private bool drawDeviceInfo = true;
     [SerializeField] private bool drawCameraFrustrum = true;
+    [SerializeField] private bool useReplay = false;
 
     private ICaptureDevice captureDevice;
     private IModelCollector modelCollector;
@@ -48,6 +74,8 @@ public class ReconstructionManager : MonoBehaviour
     private bool isCapturing = false;
     private string currentScene = "";
 
+    private List<PoseData> poses = new();
+
     void Start()
     {
         switch (deviceType)
@@ -55,8 +83,14 @@ public class ReconstructionManager : MonoBehaviour
             case DeviceType.AR:
                 captureDevice = new SmartphoneCaptureDevice(arCameraManager);
                 break;
+            case DeviceType.AR_EVAL:
+                captureDevice = new SmartphoneEvalCaptureDevice(arCameraManager, captureCamera);
+                break;
             case DeviceType.VR:
                 captureDevice = new MetaQuestCaptureDevice(webcamTextureManager);
+                break;
+            case DeviceType.VR_EVAL:
+                captureDevice = new MetaQuestEvalCaptureDevice(captureCamera, centerEyeAnchor);
                 break;
         }
 
@@ -84,6 +118,18 @@ public class ReconstructionManager : MonoBehaviour
     {
         modelCollector = collector;
         Debug.Log($"Set new Collector of type: {collector.GetType()}");
+
+        if (useReplay)
+        {
+            isCapturing = true;
+            string path = Path.Combine(Application.streamingAssetsPath, "poses.json");
+            if (File.Exists(path))
+            {
+                string json = File.ReadAllText(path);
+                poses = JsonConvert.DeserializeObject<List<PoseData>>(json);
+                Debug.Log($"Loaded {poses.Count} poses");
+            }
+        }
     }
 
     public void SetCaptureState(bool state)
@@ -152,7 +198,28 @@ public class ReconstructionManager : MonoBehaviour
     void LateUpdate()
     {
         latestIntrinsics = captureDevice.GetIntrinsics();
-        latestExtrinsics = captureDevice.GetExtrinsics();
+        if (useReplay)
+        {
+            if (poses.Count == 0)
+                return;
+
+            var currentPose = poses[0];
+            poses.RemoveAt(0);
+            var currentPosition = currentPose.position;
+            var currentRotation = currentPose.rotation;
+            latestExtrinsics = new CaptureDeviceExtrinsics()
+            {
+                CameraPosition = new Vector3(currentPosition.x, currentPosition.y, currentPosition.z),
+                CameraRotation = new Quaternion(currentRotation.x, currentRotation.y, currentRotation.z, currentRotation.w)
+            };
+
+            captureCamera.transform.position = latestExtrinsics.CameraPosition;
+            captureCamera.transform.rotation = latestExtrinsics.CameraRotation;
+        }
+        else
+        {
+            latestExtrinsics = captureDevice.GetExtrinsics();
+        }
 
         if (drawDeviceInfo)
         {
@@ -175,6 +242,7 @@ public class ReconstructionManager : MonoBehaviour
             var frame = captureDevice.GetFrame();
             if (frame.Dimensions == Vector2.zero)
             {
+                Debug.Log("Captured Frame has Dimensions of (0, 0)");
                 return;
             }
 

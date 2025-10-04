@@ -15,20 +15,38 @@ public class ReconstructionManagerEditor : Editor
         // Draw relevant settings depending on enum
         var deviceType = (DeviceType)deviceTypeProp.enumValueIndex;
 
-        if (deviceType == DeviceType.AR)
+        switch (deviceType)
         {
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("arCameraManager"));
-        }
-        else if (deviceType == DeviceType.VR)
-        {
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("webcamTextureManager"));
+            case DeviceType.AR:
+                EditorGUILayout.LabelField("AR Settings", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("arCameraManager"));
+                break;
+            case DeviceType.AR_EVAL:
+                EditorGUILayout.LabelField("AR Eval Settings", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("arCameraManager"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("captureCamera"));
+                break;
+            case DeviceType.VR:
+                EditorGUILayout.LabelField("VR Settings", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("webcamTextureManager"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("centerEyeAnchor"));
+                break;
+            case DeviceType.VR_EVAL:
+                EditorGUILayout.LabelField("VR Eval Settings", EditorStyles.boldLabel);
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("captureCamera"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("centerEyeAnchor"));
+                break;
         }
 
         // Draw the rest normally
+        EditorGUILayout.LabelField("UI Settings", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("deviceInfo"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("captureToggle"));
+
+        EditorGUILayout.LabelField("Debug Settings", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("drawDeviceInfo"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("drawCameraFrustrum"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("useReplay"));
 
         serializedObject.ApplyModifiedProperties();
     }

@@ -55,11 +55,24 @@ namespace RTReconstruct.CaptureDevices.MetaQuest
 
         public CaptureDeviceIntrinsics GetIntrinsics()
         {
+            // Intrinsics correspond to the maximum resolution (e.g., 1280x960)
             var intrinsics = PassthroughCameraUtils.GetCameraIntrinsics(PassthroughCameraEye.Left);
+
+            // Get resolutions
+            var maxResolution = PassthroughCameraUtils.GetOutputSizes(PassthroughCameraEye.Left)[^1]; // last element
+            var requestedResolution = m_WebCamTextureManager.RequestedResolution;
+
+            // Compute scale between resolutions
+            var scale = new Vector2(
+                (float)requestedResolution.x / maxResolution.x,
+                (float)requestedResolution.y / maxResolution.y
+            );
+
+            // Apply scaling: intrinsics scale with image resolution
             return new CaptureDeviceIntrinsics
             {
-                FocalLength = intrinsics.FocalLength,
-                PrincipalPoint = intrinsics.PrincipalPoint
+                FocalLength = Vector2.Scale(intrinsics.FocalLength, scale),
+                PrincipalPoint = Vector2.Scale(intrinsics.PrincipalPoint, scale)
             };
         }
     }

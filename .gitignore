@@ -62,3 +62,5 @@ Library/PackageCache/
 
 # Ignore Unity's Generated folders
 Generated/
+
+Samples/Evaluation

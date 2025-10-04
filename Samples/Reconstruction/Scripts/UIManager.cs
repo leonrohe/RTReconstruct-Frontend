@@ -57,13 +57,19 @@ public class UIManager : MonoBehaviour
         switch (model)
         {
             case "neucon":
-                reconstructionManager.SetCollector(new NeuralReconCollector());
+                reconstructionManager.SetCollector(new NeuralReconCollector(windowsSize:9));
+                break;
+            case "visfusion":
+                reconstructionManager.SetCollector(new DefaultCollector(model, windowsSize:9));
                 break;
             case "slam3r":
-                reconstructionManager.SetCollector(new SLAM3RCollector());
+                reconstructionManager.SetCollector(new SLAM3RCollector(windowsSize:9));
+                break;
+            case "mast3r":
+                reconstructionManager.SetCollector(new DefaultCollector(model, windowsSize:1));
                 break;
             default:
-                reconstructionManager.SetCollector(new DefaultCollector(model));
+                reconstructionManager.SetCollector(new DefaultCollector(model, windowsSize:9));
                 break;
         }
     }
