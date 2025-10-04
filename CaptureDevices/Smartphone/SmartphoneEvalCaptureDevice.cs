@@ -99,22 +99,39 @@ namespace RTReconstruct.CaptureDevices.Smartphone
             int captureLayer = LayerMask.NameToLayer("RoomGeometry");
             _camera.cullingMask = 1 << captureLayer;
 
-            // // Set camera intrinsics
-            // var intrinsics = GetIntrinsics();
+            if (m_cameraManager.TryGetIntrinsics(out XRCameraIntrinsics intrinsics))
+            {
+                // Native camera resolution (ARKit/ARCore gives this implicitly)
+                Vector2Int nativeRes = intrinsics.resolution; 
 
-            // // 1. Aspect ratio
-            // _camera.aspect = (float)_width / _height;
+                // Scale factors
+                float scaleX = (float)_width / nativeRes.x;
+                float scaleY = (float)_height / nativeRes.y;
 
-            // // 2. Vertical FOV
-            // float fovY = 2f * Mathf.Atan(0.5f * _height / intrinsics.FocalLength.y) * Mathf.Rad2Deg;
-            // _camera.fieldOfView = fovY;
+                // Scale intrinsics to match our render resolution
+                Vector2 focalLength = new Vector2(
+                    intrinsics.focalLength.x * scaleX,
+                    intrinsics.focalLength.y * scaleY
+                );
 
-            // // 3. Lens shift (principal point offset)
-            // Vector2 pp = intrinsics.PrincipalPoint;
-            // _camera.lensShift = new Vector2(
-            //     (pp.x - _width * 0.5f) / (_width * 0.5f),
-            //     (_height * 0.5f - pp.y) / (_height * 0.5f) // Y axis flipped in Unity
-            // );
+                Vector2 principalPoint = new Vector2(
+                    intrinsics.principalPoint.x * scaleX,
+                    intrinsics.principalPoint.y * scaleY
+                );
+
+                // 1. Aspect ratio
+                _camera.aspect = (float)_width / _height;
+
+                // 2. Vertical FOV
+                float fovY = 2f * Mathf.Atan(0.5f * _height / focalLength.y) * Mathf.Rad2Deg;
+                _camera.fieldOfView = fovY;
+
+                // 3. Lens shift (principal point offset)
+                _camera.lensShift = new Vector2(
+                    (principalPoint.x - _width * 0.5f) / (_width * 0.5f),
+                    (_height * 0.5f - principalPoint.y) / (_height * 0.5f) // flip Y
+                );
+            }
         }
     }
 }
