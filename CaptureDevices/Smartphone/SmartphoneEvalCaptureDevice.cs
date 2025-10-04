@@ -63,6 +63,11 @@ namespace RTReconstruct.CaptureDevices.Smartphone
             if (_captureRT == null || _readbackTex == null)
                 throw new Exception("Capture camera not initialized");
 
+            // Set Camera Position and Rotation
+            var extrinsics = GetExtrinsics();
+            _camera.transform.position = extrinsics.CameraPosition;
+            _camera.transform.rotation = extrinsics.CameraRotation;
+
             // Render into RT
             _camera.Render();
 
@@ -73,7 +78,7 @@ namespace RTReconstruct.CaptureDevices.Smartphone
             RenderTexture.active = null;
 
             // Encode
-            byte[] jpgData = _readbackTex.EncodeToJPG();
+            byte[] jpgData = _readbackTex.EncodeToJPG(100);
 
             return new CaptureDeviceFrame
             {
@@ -94,22 +99,22 @@ namespace RTReconstruct.CaptureDevices.Smartphone
             int captureLayer = LayerMask.NameToLayer("RoomGeometry");
             _camera.cullingMask = 1 << captureLayer;
 
-            // Set camera intrinsics
-            var intrinsics = GetIntrinsics();
+            // // Set camera intrinsics
+            // var intrinsics = GetIntrinsics();
 
-            // 1. Aspect ratio
-            _camera.aspect = (float)_width / _height;
+            // // 1. Aspect ratio
+            // _camera.aspect = (float)_width / _height;
 
-            // 2. Vertical FOV
-            float fovY = 2f * Mathf.Atan(0.5f * _height / intrinsics.FocalLength.y) * Mathf.Rad2Deg;
-            _camera.fieldOfView = fovY;
+            // // 2. Vertical FOV
+            // float fovY = 2f * Mathf.Atan(0.5f * _height / intrinsics.FocalLength.y) * Mathf.Rad2Deg;
+            // _camera.fieldOfView = fovY;
 
-            // 3. Lens shift (principal point offset)
-            Vector2 pp = intrinsics.PrincipalPoint;
-            _camera.lensShift = new Vector2(
-                (pp.x - _width * 0.5f) / (_width * 0.5f),
-                (_height * 0.5f - pp.y) / (_height * 0.5f) // Y axis flipped in Unity
-            );
+            // // 3. Lens shift (principal point offset)
+            // Vector2 pp = intrinsics.PrincipalPoint;
+            // _camera.lensShift = new Vector2(
+            //     (pp.x - _width * 0.5f) / (_width * 0.5f),
+            //     (_height * 0.5f - pp.y) / (_height * 0.5f) // Y axis flipped in Unity
+            // );
         }
     }
 }

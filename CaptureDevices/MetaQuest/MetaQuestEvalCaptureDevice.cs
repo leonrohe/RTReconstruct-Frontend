@@ -51,7 +51,7 @@ namespace RTReconstruct.CaptureDevices.MetaQuest
             RenderTexture.active = null;
 
             // Encode
-            byte[] jpgData = _readbackTex.EncodeToJPG();
+            byte[] jpgData = _readbackTex.EncodeToJPG(100);
 
             return new CaptureDeviceFrame
             {

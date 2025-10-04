@@ -75,7 +75,7 @@ namespace RTReconstruct.CaptureDevices.Smartphone
                 texture.LoadRawTextureData(buffer);
                 texture.Apply();
 
-                byte[] imageBytes = texture.EncodeToJPG();
+                byte[] imageBytes = texture.EncodeToJPG(100);
 
                 image.Dispose();
                 buffer.Dispose();

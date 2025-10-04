@@ -43,7 +43,7 @@ namespace RTReconstruct.CaptureDevices.MetaQuest
             texture.SetPixels32(m_PixelBuffer);
             texture.Apply();
 
-            byte[] jpgData = texture.EncodeToJPG();
+            byte[] jpgData = texture.EncodeToJPG(100);
             UnityEngine.Object.Destroy(texture);  // Clean up the texture
 
             return new CaptureDeviceFrame
