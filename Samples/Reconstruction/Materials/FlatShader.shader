@@ -1,16 +1,25 @@
-Shader "Custom/FlatUnlit"
+Shader "Custom/FlatUnlitAlwaysFront3D"
 {
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
     }
+
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
-        LOD 100
+        Tags
+        {
+            "Queue"="Geometry+10"   // Render just after standard geometry
+            "RenderType"="Opaque"
+        }
 
         Pass
         {
+            ZTest LEqual
+            ZWrite On               // <- Fix self z-fighting
+            Offset -2, -2           // Push slightly toward camera
+            Cull Off
+
             CGPROGRAM
             #pragma target 3.0
             #pragma vertex vert
@@ -45,11 +54,8 @@ Shader "Custom/FlatUnlit"
                 float3 dpdy = ddy(i.worldPos);
                 float3 faceNormal = normalize(cross(dpdx, dpdy));
 
-                // Fake-Licht aus Kamerarichtung, damit Flächen sich abheben
                 float3 viewDir = normalize(_WorldSpaceCameraPos - i.worldPos);
                 float NdotV = abs(dot(faceNormal, viewDir));
-
-                // Immer mindestens etwas hell, z. B. 0.2
                 float brightness = max(0.2, NdotV);
 
                 return fixed4(_Color.rgb * brightness, 1.0);
