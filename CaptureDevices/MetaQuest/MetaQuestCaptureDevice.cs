@@ -17,15 +17,16 @@ namespace RTReconstruct.CaptureDevices.MetaQuest
         public MetaQuestCaptureDevice(WebCamTextureManager wcTextManag)
         {
             m_WebCamTextureManager = wcTextManag;
+            m_WebCamTextureManager.RequestedResolution = new Vector2Int(640, 480);
         }
 
         public CaptureDeviceExtrinsics GetExtrinsics()
         {
-            var headPose = OVRPlugin.GetNodePoseStateImmediate(OVRPlugin.Node.Head).Pose.ToOVRPose();
+            var camPose = PassthroughCameraUtils.GetCameraPoseInWorld(PassthroughCameraEye.Left);
             return new CaptureDeviceExtrinsics
             {
-                CameraPosition = headPose.position,
-                CameraRotation = headPose.orientation
+                CameraPosition = camPose.position,
+                CameraRotation = camPose.rotation
             };
         }
 
@@ -53,26 +54,41 @@ namespace RTReconstruct.CaptureDevices.MetaQuest
             };
         }
 
+       
         public CaptureDeviceIntrinsics GetIntrinsics()
         {
-            // Intrinsics correspond to the maximum resolution (e.g., 1280x960)
+            var webcamTexture = m_WebCamTextureManager.WebCamTexture;
+            if (webcamTexture == null || !webcamTexture.isPlaying)
+                throw new Exception("WebCamTexture not correctly initialized");
+
+            // Use the actual captured resolution
+            int actualWidth = webcamTexture.width;
+            int actualHeight = webcamTexture.height;
+
+            // Get native intrinsics from the passthrough camera
             var intrinsics = PassthroughCameraUtils.GetCameraIntrinsics(PassthroughCameraEye.Left);
 
-            // Get resolutions
-            var maxResolution = PassthroughCameraUtils.GetOutputSizes(PassthroughCameraEye.Left)[^1]; // last element
-            var requestedResolution = m_WebCamTextureManager.RequestedResolution;
+            // Native resolution the intrinsics correspond to
+            Vector2Int nativeRes = intrinsics.Resolution;
 
-            // Compute scale between resolutions
-            var scale = new Vector2(
-                (float)requestedResolution.x / maxResolution.x,
-                (float)requestedResolution.y / maxResolution.y
+            // Scale focal length and principal point according to actual resolution
+            float scaleX = (float)actualWidth / nativeRes.x;
+            float scaleY = (float)actualHeight / nativeRes.y;
+
+            Vector2 focalLengthScaled = new Vector2(
+                intrinsics.FocalLength.x * scaleX,
+                intrinsics.FocalLength.y * scaleY
             );
 
-            // Apply scaling: intrinsics scale with image resolution
+            Vector2 principalPointScaled = new Vector2(
+                intrinsics.PrincipalPoint.x * scaleX,
+                intrinsics.PrincipalPoint.y * scaleY
+            );
+
             return new CaptureDeviceIntrinsics
             {
-                FocalLength = Vector2.Scale(intrinsics.FocalLength, scale),
-                PrincipalPoint = Vector2.Scale(intrinsics.PrincipalPoint, scale)
+                FocalLength = focalLengthScaled,
+                PrincipalPoint = principalPointScaled
             };
         }
     }

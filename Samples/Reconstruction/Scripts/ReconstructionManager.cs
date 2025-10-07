@@ -56,7 +56,6 @@ public class ReconstructionManager : MonoBehaviour
     [SerializeField] private DeviceType deviceType;
     [SerializeField] private ARCameraManager arCameraManager;
     [SerializeField] private WebCamTextureManager webcamTextureManager;
-    [SerializeField] private GameObject centerEyeAnchor;
     [SerializeField] private Camera captureCamera;
     [SerializeField] private TMP_Text deviceInfo;
     [SerializeField] private UnityEngine.UI.Toggle captureToggle;
@@ -90,7 +89,7 @@ public class ReconstructionManager : MonoBehaviour
                 captureDevice = new MetaQuestCaptureDevice(webcamTextureManager);
                 break;
             case DeviceType.VR_EVAL:
-                captureDevice = new MetaQuestEvalCaptureDevice(captureCamera, centerEyeAnchor);
+                captureDevice = new MetaQuestEvalCaptureDevice(captureCamera);
                 break;
         }
 
@@ -198,6 +197,7 @@ public class ReconstructionManager : MonoBehaviour
     void LateUpdate()
     {
         latestIntrinsics = captureDevice.GetIntrinsics();
+
         if (useReplay)
         {
             if (poses.Count == 0)

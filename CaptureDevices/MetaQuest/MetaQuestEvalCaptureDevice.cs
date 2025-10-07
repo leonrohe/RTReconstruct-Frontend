@@ -13,26 +13,25 @@ namespace RTReconstruct.CaptureDevices.MetaQuest
     {
 
         private Camera _camera;
-        private GameObject _centerEyeAnchor;
+        private WebCamTextureManager _webCamTextureManager;
         private RenderTexture _captureRT;
         private Texture2D _readbackTex;
         private int _width = 640;
         private int _height = 480;
 
-        public MetaQuestEvalCaptureDevice(Camera camera, GameObject centerEyeAnchor)
+        public MetaQuestEvalCaptureDevice(Camera camera)
         {
             _camera = camera;
-            _centerEyeAnchor = centerEyeAnchor;
             InitCamera();
         }
 
         public CaptureDeviceExtrinsics GetExtrinsics()
         {
-            var headPose = _centerEyeAnchor.transform.ToOVRPose();
+            var headPose = PassthroughCameraUtils.GetCameraPoseInWorld(PassthroughCameraEye.Left);
             return new CaptureDeviceExtrinsics
             {
                 CameraPosition = headPose.position,
-                CameraRotation = headPose.orientation
+                CameraRotation = headPose.rotation
             };
         }
 
@@ -63,10 +62,11 @@ namespace RTReconstruct.CaptureDevices.MetaQuest
         public CaptureDeviceIntrinsics GetIntrinsics()
         {
         #if UNITY_EDITOR
+            // Hardcoded values for in-editor replay
             return new CaptureDeviceIntrinsics()
             {
-                FocalLength = new Vector2(427.88568115f, 427.90527344f),
-                PrincipalPoint = new Vector2(316.15481567f, 237.06651306f)
+                FocalLength = new Vector2(432.53857422f, 432.53857422f),
+                PrincipalPoint = new Vector2(321.10760498f, 240.78053284f)
             };
         #else
             var intrinsics = PassthroughCameraUtils.GetCameraIntrinsics(PassthroughCameraEye.Left);
@@ -84,7 +84,7 @@ namespace RTReconstruct.CaptureDevices.MetaQuest
                 FocalLength = Vector2.Scale(intrinsics.FocalLength, scale),
                 PrincipalPoint = Vector2.Scale(intrinsics.PrincipalPoint, scale)
             };
-        #endif
+#endif
         }
 
         private void InitCamera()
