@@ -104,7 +104,6 @@ namespace RTReconstruct.Networking
 
         public void EnqueueFragment(IFragment fragment)
         {
-            Debug.Log(fragment);
             if (fragment is TransformFragment)
             {
                 if (sendQueue.Count > 0 && sendQueue.First.Value is TransformFragment)
@@ -133,22 +132,26 @@ namespace RTReconstruct.Networking
             while (sendQueue.Count > 0 && isConnected)
             {
                 IFragment fragment = sendQueue.First.Value;
-                byte[] data = fragment.Serialize();
                 sendQueue.RemoveFirst();
 
                 try
                 {
-                    await websocket.Send(data);
+                    // Offload serialization + send to background thread
+                    await Task.Run(async () =>
+                    {
+                        byte[] data = fragment.Serialize();
+                        await websocket.Send(data);
+                    });
                 }
                 catch (Exception ex)
                 {
                     Debug.LogWarning("Failed to send fragment: " + ex.Message);
-                    sendQueue.AddLast(fragment);    // Re-enqueue
-                    await Task.Delay(100);          // Brief delay before retry
-                    break;                          // Exit loop and try again later
+                    sendQueue.AddLast(fragment);
+                    await Task.Delay(100);
+                    break;
                 }
 
-                await Task.Yield(); // Yield to allow Unity to remain responsive
+                await Task.Yield(); // Keeps Unity responsive
             }
 
             isSending = false;
