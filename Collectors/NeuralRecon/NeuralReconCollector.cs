@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using RTReconstruct.Collectors.Interfaces;
 using RTReconstruct.Core.Models;
 using UnityEngine;
@@ -44,19 +45,16 @@ namespace RTReconstruct.Collectors.NeuralRecon
         {
             Debug.Assert(IsFull(), "Cannot consume: buffer is not full.");
 
-            var frames_copy = (CaptureDeviceFrame[])m_Frames.Clone();
-            var intrinsics_copy = (CaptureDeviceIntrinsics[])m_Intrinsics.Clone();
-            var extrinsics_copy = (CaptureDeviceExtrinsics[])m_Extrinsics.Clone();
-
-            m_BufferIdx = 0;
-
-            return new ModelFragment(
+            var fragment = new ModelFragment(
                 "neucon",
                 scene,
-                frames_copy,
-                intrinsics_copy,
-                extrinsics_copy
+                m_Frames.ToArray(),
+                m_Intrinsics.ToArray(),
+                m_Extrinsics.ToArray()
             );
+
+            Clear();
+            return fragment;
         }
 
         public bool IsFull()
@@ -104,11 +102,6 @@ namespace RTReconstruct.Collectors.NeuralRecon
         {
             // Reset buffer index
             m_BufferIdx = 0;
-
-            // Clear arrays to release references
-            Array.Clear(m_Intrinsics, 0, m_Intrinsics.Length);
-            Array.Clear(m_Extrinsics, 0, m_Extrinsics.Length);
-            Array.Clear(m_Frames, 0, m_Frames.Length);
 
             // Reset last capture info
             m_LastExtrinsic = null;
