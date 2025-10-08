@@ -3,21 +3,17 @@ using System.Collections.Generic;
 using RTReconstruct.CaptureDevices.Interfaces;
 using RTReconstruct.CaptureDevices.Smartphone;
 using RTReconstruct.Collectors.Interfaces;
-using RTReconstruct.Collectors.NeuralRecon;
-using RTReconstruct.Collectors.SLAM3R;
-using RTReconstruct.Networking;
+using RTReconstruct.Core.Models;
 using TMPro;
 using UnityEngine;
 using UnityEngine.XR.ARFoundation;
-using UnityEngine.Assertions;
-using RTReconstruct.Core.Models;
 using UnityEngine.UI;
-using UnityEngine.UIElements;
 using System.Globalization;
 using PassthroughCameraSamples;
 using RTReconstruct.CaptureDevices.MetaQuest;
 using System.IO;
 using Newtonsoft.Json;
+using RTReconstruct.Networking;
 
 [System.Serializable]
 public class PoseData
@@ -58,7 +54,7 @@ public class ReconstructionManager : MonoBehaviour
     [SerializeField] private WebCamTextureManager webcamTextureManager;
     [SerializeField] private Camera captureCamera;
     [SerializeField] private TMP_Text deviceInfo;
-    [SerializeField] private UnityEngine.UI.Toggle captureToggle;
+    [SerializeField] private Toggle captureToggle;
     [SerializeField] private bool drawDeviceInfo = true;
     [SerializeField] private bool drawCameraFrustrum = true;
     [SerializeField] private bool useReplay = false;
@@ -72,11 +68,13 @@ public class ReconstructionManager : MonoBehaviour
     private bool isHost = false;
     private bool isCapturing = false;
     private string currentScene = "";
+    private Coroutine captureRoutine;
 
     private List<PoseData> poses = new();
 
     void Start()
     {
+        // Device setup
         switch (deviceType)
         {
             case DeviceType.AR:
@@ -102,6 +100,7 @@ public class ReconstructionManager : MonoBehaviour
         Debug.Assert(scene != "");
 
         currentScene = scene;
+
         switch (role)
         {
             case "host":
@@ -111,6 +110,11 @@ public class ReconstructionManager : MonoBehaviour
                 RegisterVisitor();
                 break;
         }
+
+        // Start capture coroutine
+        if (captureRoutine != null)
+            StopCoroutine(captureRoutine);
+        captureRoutine = StartCoroutine(CaptureLoop());
     }
 
     public void SetCollector(IModelCollector collector)
@@ -174,11 +178,11 @@ public class ReconstructionManager : MonoBehaviour
 
     private void DisplayDeviceInfo()
     {
-        string info = "";
+        if (deviceInfo == null) return;
 
+        string info = "";
         info += $"Focal Length: {latestIntrinsics.FocalLength}\n";
         info += $"Principal Point: {latestIntrinsics.PrincipalPoint}\n";
-
         info += $"Position: {latestExtrinsics.CameraPosition}\n";
         info += $"Rotation: {latestExtrinsics.CameraRotation.eulerAngles}\n";
 
@@ -194,71 +198,68 @@ public class ReconstructionManager : MonoBehaviour
         return new Vector3(x, y, z);
     }
 
-    void LateUpdate()
+    // 🧠 NEW: fully synchronized capture coroutine
+    private IEnumerator CaptureLoop()
     {
-        latestIntrinsics = captureDevice.GetIntrinsics();
-
-        if (useReplay)
+        while (true)
         {
-            if (poses.Count == 0)
-                return;
+            yield return new WaitForEndOfFrame(); // sync with Unity's render timing
 
-            var currentPose = poses[0];
-            poses.RemoveAt(0);
-            var currentPosition = currentPose.position;
-            var currentRotation = currentPose.rotation;
-            latestExtrinsics = new CaptureDeviceExtrinsics()
+            // Fetch intrinsics every frame (in case of runtime changes)
+            latestIntrinsics = captureDevice.GetIntrinsics();
+
+            if (useReplay)
             {
-                CameraPosition = new Vector3(currentPosition.x, currentPosition.y, currentPosition.z),
-                CameraRotation = new Quaternion(currentRotation.x, currentRotation.y, currentRotation.z, currentRotation.w)
-            };
+                if (poses.Count == 0)
+                    continue;
 
-            captureCamera.transform.position = latestExtrinsics.CameraPosition;
-            captureCamera.transform.rotation = latestExtrinsics.CameraRotation;
-        }
-        else
-        {
-            latestExtrinsics = captureDevice.GetExtrinsics();
-        }
-
-        if (drawDeviceInfo)
-        {
-            DisplayDeviceInfo();
-        }
-
-        if (!isHost || !isCapturing)
-        {
-            return;
-        }
-
-        uint frameIDX = (uint)Time.frameCount;
-        if (!modelCollector.IsNthFrame(frameIDX))
-        {
-            return;
-        }
-
-        if (modelCollector.ShouldCollect(latestIntrinsics, latestExtrinsics))
-        {
-            var frame = captureDevice.GetFrame();
-            if (frame.Dimensions == Vector2.zero)
+                var currentPose = poses[0];
+                poses.RemoveAt(0);
+                latestExtrinsics = new CaptureDeviceExtrinsics()
+                {
+                    CameraPosition = new Vector3(currentPose.position.x, currentPose.position.y, currentPose.position.z),
+                    CameraRotation = new Quaternion(currentPose.rotation.x, currentPose.rotation.y, currentPose.rotation.z, currentPose.rotation.w)
+                };
+            }
+            else
             {
-                Debug.Log("Captured Frame has Dimensions of (0, 0)");
-                return;
+                // ⚡ Captured *after* render, synchronized with current frame
+                latestExtrinsics = captureDevice.GetExtrinsics();
             }
 
-            modelCollector.Collect(latestIntrinsics, latestExtrinsics, frame);
+            if (drawDeviceInfo)
+                DisplayDeviceInfo();
 
-            if (drawCameraFrustrum)
-            {
-                var frustrumMesh = MeshUtils.CreateCameraFrustumWireframe(latestExtrinsics.CameraPosition, latestExtrinsics.CameraRotation);
-                Destroy(frustrumMesh, 5f);
-            }
+            if (!isHost || !isCapturing || modelCollector == null)
+                continue;
 
-            if (modelCollector.IsFull())
+            uint frameIDX = (uint)Time.frameCount;
+            if (!modelCollector.IsNthFrame(frameIDX))
+                continue;
+
+            if (modelCollector.ShouldCollect(latestIntrinsics, latestExtrinsics))
             {
-                var fragment = modelCollector.Consume(currentScene);
-                ReconstructionClient.Instance.EnqueueFragment(fragment);
-                Debug.Log($"Created fragment: {fragment}");
+                var frame = captureDevice.GetFrame();
+                if (frame.Dimensions == Vector2.zero)
+                {
+                    Debug.Log("Captured Frame has Dimensions of (0, 0)");
+                    continue;
+                }
+
+                modelCollector.Collect(latestIntrinsics, latestExtrinsics, frame);
+
+                if (drawCameraFrustrum)
+                {
+                    var frustrumMesh = MeshUtils.CreateCameraFrustumWireframe(latestExtrinsics.CameraPosition, latestExtrinsics.CameraRotation);
+                    Destroy(frustrumMesh, 5f);
+                }
+
+                if (modelCollector.IsFull())
+                {
+                    var fragment = modelCollector.Consume(currentScene);
+                    ReconstructionClient.Instance.EnqueueFragment(fragment);
+                    Debug.Log($"Created fragment: {fragment}");
+                }
             }
         }
     }
