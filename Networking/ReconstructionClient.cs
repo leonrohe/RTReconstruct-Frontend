@@ -81,6 +81,7 @@ namespace RTReconstruct.Networking
                 }
                 else
                 {
+                    Timer.Instance.Start();
                     OnModelResultReceived?.Invoke(new ModelResult(bytes));
                 }    
             };

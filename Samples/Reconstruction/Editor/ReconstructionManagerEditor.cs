@@ -28,12 +28,12 @@ public class ReconstructionManagerEditor : Editor
                 break;
             case DeviceType.VR:
                 EditorGUILayout.LabelField("VR Settings", EditorStyles.boldLabel);
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("webcamTextureManager"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("cameraAccess"));
                 break;
             case DeviceType.VR_EVAL:
                 EditorGUILayout.LabelField("VR Eval Settings", EditorStyles.boldLabel);
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("captureCamera"));
-                EditorGUILayout.PropertyField(serializedObject.FindProperty("webcamTextureManager"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("cameraAccess"));
                 break;
         }
 

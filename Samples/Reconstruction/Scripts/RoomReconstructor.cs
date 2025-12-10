@@ -52,7 +52,13 @@ public class RoomReconstructor : MonoBehaviour
             GLB Size:     {result.GetGLB().Length} bytes
         ");
 
-        mainThreadActions.Enqueue(() => _ = InstantiateResultAsync(result));
+        mainThreadActions.Enqueue(async () =>
+        {
+            await InstantiateResultAsync(result);
+            Timer.Instance.Stop();
+            Debug.Log($"Reconstruction Time: {Timer.Instance.GetElapsedMilliseconds()} ms");
+        });
+        
     }
 
     private async Task InstantiateResultAsync(ModelResult result)
