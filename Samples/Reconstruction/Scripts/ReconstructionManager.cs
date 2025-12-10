@@ -14,6 +14,7 @@ using RTReconstruct.CaptureDevices.MetaQuest;
 using System.IO;
 using Newtonsoft.Json;
 using RTReconstruct.Networking;
+using Meta.XR;
 
 [System.Serializable]
 public class PoseData
@@ -51,7 +52,7 @@ public class ReconstructionManager : MonoBehaviour
 {
     [SerializeField] private DeviceType deviceType;
     [SerializeField] private ARCameraManager arCameraManager;
-    [SerializeField] private WebCamTextureManager webcamTextureManager;
+    [SerializeField] private PassthroughCameraAccess cameraAccess;
     [SerializeField] private Camera captureCamera;
     [SerializeField] private TMP_Text deviceInfo;
     [SerializeField] private Toggle captureToggle;
@@ -84,10 +85,10 @@ public class ReconstructionManager : MonoBehaviour
                 captureDevice = new SmartphoneEvalCaptureDevice(arCameraManager, captureCamera);
                 break;
             case DeviceType.VR:
-                captureDevice = new MetaQuestCaptureDevice(webcamTextureManager);
+                captureDevice = new MetaQuestCaptureDevice(cameraAccess);
                 break;
             case DeviceType.VR_EVAL:
-                captureDevice = new MetaQuestEvalCaptureDevice(captureCamera);
+                captureDevice = new MetaQuestEvalCaptureDevice(captureCamera, cameraAccess);
                 break;
         }
 

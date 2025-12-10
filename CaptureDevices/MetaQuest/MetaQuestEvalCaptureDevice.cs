@@ -6,6 +6,7 @@ using RTReconstruct.Core.Models;
 using PassthroughCameraSamples;
 using Oculus.Interaction.Samples;
 using Unity.Mathematics;
+using Meta.XR;
 
 namespace RTReconstruct.CaptureDevices.MetaQuest
 {
@@ -13,21 +14,22 @@ namespace RTReconstruct.CaptureDevices.MetaQuest
     {
 
         private Camera _camera;
-        private WebCamTextureManager _webCamTextureManager;
+        private PassthroughCameraAccess m_cameraAccess;
         private RenderTexture _captureRT;
         private Texture2D _readbackTex;
         private int _width = 640;
         private int _height = 480;
 
-        public MetaQuestEvalCaptureDevice(Camera camera)
+        public MetaQuestEvalCaptureDevice(Camera camera, PassthroughCameraAccess cameraAccess)
         {
             _camera = camera;
+            m_cameraAccess = cameraAccess;
             InitCamera();
         }
 
         public CaptureDeviceExtrinsics GetExtrinsics()
         {
-            var headPose = PassthroughCameraUtils.GetCameraPoseInWorld(PassthroughCameraEye.Left);
+            var headPose = m_cameraAccess.GetCameraPose();
             return new CaptureDeviceExtrinsics
             {
                 CameraPosition = headPose.position,
@@ -74,20 +76,12 @@ namespace RTReconstruct.CaptureDevices.MetaQuest
                 PrincipalPoint = new Vector2(321.10760498f, 240.78053284f)
             };
         #else
-            var intrinsics = PassthroughCameraUtils.GetCameraIntrinsics(PassthroughCameraEye.Left);
+            PassthroughCameraAccess.CameraIntrinsics intrinsics = m_cameraAccess.Intrinsics;
 
-            var maxResolution = new Vector2Int(1280, 960);
-            var requestedResolution = new Vector2Int(640, 480);
-
-            var scale = new Vector2(
-                (float)requestedResolution.x / maxResolution.x,
-                (float)requestedResolution.y / maxResolution.y
-            );
-
-            return new CaptureDeviceIntrinsics
+            return new CaptureDeviceIntrinsics()
             {
-                FocalLength = Vector2.Scale(intrinsics.FocalLength, scale),
-                PrincipalPoint = Vector2.Scale(intrinsics.PrincipalPoint, scale)
+                FocalLength = new Vector2(432.53857422f, 432.53857422f),
+                PrincipalPoint = new Vector2(321.10760498f, 240.78053284f)
             };
 #endif
         }
