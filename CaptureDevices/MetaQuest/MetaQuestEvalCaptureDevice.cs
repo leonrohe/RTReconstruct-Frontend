@@ -43,9 +43,9 @@ namespace RTReconstruct.CaptureDevices.MetaQuest
                 throw new Exception("Capture camera not initialized");
 
 
-            var extrinsics = GetExtrinsics();
-            _camera.transform.position = extrinsics.CameraPosition;
-            _camera.transform.rotation = extrinsics.CameraRotation;
+            // var extrinsics = GetExtrinsics();
+            // _camera.transform.position = extrinsics.CameraPosition;
+            // _camera.transform.rotation = extrinsics.CameraRotation;
 
             // Render into RT
             _camera.Render();

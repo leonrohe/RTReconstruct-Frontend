@@ -199,7 +199,6 @@ public class ReconstructionManager : MonoBehaviour
         return new Vector3(x, y, z);
     }
 
-    // 🧠 NEW: fully synchronized capture coroutine
     private IEnumerator CaptureLoop()
     {
         while (true)
@@ -221,10 +220,10 @@ public class ReconstructionManager : MonoBehaviour
                     CameraPosition = new Vector3(currentPose.position.x, currentPose.position.y, currentPose.position.z),
                     CameraRotation = new Quaternion(currentPose.rotation.x, currentPose.rotation.y, currentPose.rotation.z, currentPose.rotation.w)
                 };
+                captureCamera.transform.SetPositionAndRotation(latestExtrinsics.CameraPosition, latestExtrinsics.CameraRotation);
             }
             else
             {
-                // ⚡ Captured *after* render, synchronized with current frame
                 latestExtrinsics = captureDevice.GetExtrinsics();
             }
 
