@@ -4950,8 +4950,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 744601062}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 619.4593, y: 0, z: 759.91205}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4969,15 +4969,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e42c66bef011004da40b1558d94cb8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  deviceType: 1
+  deviceType: 2
   arCameraManager: {fileID: 0}
   webcamTextureManager: {fileID: 2075459297}
-  centerEyeAnchor: {fileID: 0}
+  centerEyeAnchor: {fileID: 2025329805}
   captureCamera: {fileID: 0}
   deviceInfo: {fileID: 323577253}
   captureToggle: {fileID: 1869658759}
   drawDeviceInfo: 1
   drawCameraFrustrum: 1
+  useReplay: 0
 --- !u!1 &780648763
 GameObject:
   m_ObjectHideFlags: 0
@@ -12449,7 +12450,7 @@ MonoBehaviour:
   requestScenePermissionOnStartup: 0
   requestRecordAudioPermissionOnStartup: 0
   _localDimming: 1
-  _trackingOriginType: 0
+  _trackingOriginType: 1
   usePositionTracking: 1
   useRotationTracking: 1
   useIPDInPositionTracking: 1
